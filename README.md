@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/mlange-42/ark-inspect)](https://goreportcard.com/report/github.com/mlange-42/ark-inspect)
 [![Go Reference](https://pkg.go.dev/badge/github.com/mlange-42/ark-inspect.svg)](https://pkg.go.dev/github.com/mlange-42/ark-inspect)
 [![GitHub](https://img.shields.io/badge/github-repo-blue?logo=github)](https://github.com/mlange-42/ark-inspect)
-[![MIT license](https://img.shields.io/github/license/mlange-42/ark-inspect)](https://github.com/mlange-42/ark-inspect/blob/main/LICENSE)
+[![MIT license](https://img.shields.io/github/license/mlange-42/ark-inspect)](https://github.com/mlange-42/ark-inspect/blob/main/LICENSE-MIT)
 [![Apache 2.0 license](https://img.shields.io/badge/Apache%202.0-brightgreen?label=license)](https://github.com/mlange-42/ark/blob/main/LICENSE-APACHE)
 
 *Ark Inspect* provides a REPL for inspection of running applications using the [Ark](https://github.com/mlange-42/ark) Entity Component System (ECS).
