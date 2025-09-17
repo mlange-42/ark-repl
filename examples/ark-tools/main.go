@@ -9,7 +9,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// CommandSystem executes commands
+// CommandSystem executes incoming REPL commands.
 type CommandSystem struct {
 	Repl *repl.Repl
 }
@@ -35,6 +35,7 @@ func main() {
 
 	app.World.NewEntities(100, nil)
 
+	// Callbacks for loop control.
 	callbacks := repl.Callbacks{
 		Pause: func(out *strings.Builder) {
 			app.Paused = true
@@ -51,7 +52,10 @@ func main() {
 
 	app.AddUISystem(&CommandSystem{repl})
 
-	repl.StartServer(":9000")
+	// For control from this terminal:
 	//repl.Start()
+
+	// For control from another terminal:
+	repl.StartServer(":9000")
 	app.Run()
 }

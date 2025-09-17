@@ -36,6 +36,7 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 			"resume": &resume{},
 			"stop":   &stop{},
 			"help":   &help{},
+			"stats":  &stats{},
 			"list":   &list{},
 		},
 	}
