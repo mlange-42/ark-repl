@@ -38,15 +38,12 @@ func main() {
 	callbacks := repl.Callbacks{
 		Pause: func(out *strings.Builder) {
 			app.Paused = true
-			out.WriteString("Simulation paused\n")
 		},
 		Resume: func(out *strings.Builder) {
 			app.Paused = false
-			out.WriteString("Simulation resumed\n")
 		},
 		Stop: func(out *strings.Builder) {
 			ecs.GetResource[resource.Termination](&app.World).Terminate = true
-			out.WriteString("Simulation terminated\n")
 		},
 	}
 

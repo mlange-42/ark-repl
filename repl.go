@@ -42,6 +42,11 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 	return &repl
 }
 
+// World returns the World associated to this REPL.
+func (r *Repl) World() *ecs.World {
+	return r.world
+}
+
 // RunCommands runs all commands.
 func (r *Repl) RunCommands() {
 	for {
@@ -54,7 +59,7 @@ func (r *Repl) RunCommands() {
 	}
 }
 
-// Start the repl.
+// Start the REPL.
 func (r *Repl) Start() {
 	go r.startLocal()
 }
@@ -79,7 +84,7 @@ func (r *Repl) startLocal() {
 	}
 }
 
-// StartServer starts a server for the repl.
+// StartServer starts a server for the REPL.
 func (r *Repl) StartServer(addr string) {
 	go r.startServer(addr)
 }
@@ -136,16 +141,16 @@ func (r *Repl) handleCommand(cmd string, out *strings.Builder) {
 	cmdName, args := parse(cmd)
 
 	if command, ok := commands[cmdName]; ok {
-		command.exec(r, args, out)
+		r.execCommand(command, args, out)
 	} else {
 		out.WriteString("Unknown command: " + cmd + "\n")
 	}
 }
 
-func (r *Repl) execCommand(fn func(*ecs.World, *strings.Builder), out *strings.Builder) {
+func (r *Repl) execCommand(cmd command, args []string, out *strings.Builder) {
 	done := make(chan struct{})
 	r.channel <- func(world *ecs.World) {
-		fn(world, out)
+		cmd.exec(r, args, out)
 		close(done)
 	}
 	<-done
