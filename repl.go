@@ -3,25 +3,18 @@ package arkinspect
 import (
 	"bufio"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 
 	"github.com/mlange-42/ark/ecs"
 )
 
-var commands = map[string]command{
-	"pause":  &pause{},
-	"resume": &resume{},
-	"stop":   &stop{},
-	"help":   &help{},
-	"list":   &list{},
-}
-
 // Callbacks for simulation loop control.
 type Callbacks struct {
-	Pause  func()
-	Resume func()
-	Stop   func()
+	Pause  func(out *strings.Builder)
+	Resume func(out *strings.Builder)
+	Stop   func(out *strings.Builder)
 }
 
 // Repl is the main entry point.
@@ -29,6 +22,7 @@ type Repl struct {
 	channel   chan func(*ecs.World)
 	world     *ecs.World
 	callbacks Callbacks
+	commands  map[string]Command
 }
 
 // NewRepl creates a new [Repl].
@@ -37,8 +31,31 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 		channel:   make(chan func(*ecs.World)),
 		world:     world,
 		callbacks: callbacks,
+		commands: map[string]Command{
+			"pause":  &pause{},
+			"resume": &resume{},
+			"stop":   &stop{},
+			"help":   &help{},
+			"list":   &list{},
+		},
 	}
 	return &repl
+}
+
+// World returns the World associated to this REPL.
+func (r *Repl) World() *ecs.World {
+	return r.world
+}
+
+// AddCommand adds a command to the REPL.
+//
+// Returns an error if a command with the same name is already registered.
+func (r *Repl) AddCommand(name string, cmd Command) error {
+	if _, ok := r.commands[name]; ok {
+		return fmt.Errorf("command '%s' is already registered", name)
+	}
+	r.commands[name] = cmd
+	return nil
 }
 
 // RunCommands runs all commands.
@@ -53,40 +70,101 @@ func (r *Repl) RunCommands() {
 	}
 }
 
-// Start the repl.
+// Start the REPL.
 func (r *Repl) Start() {
-	go r.start()
+	go r.startLocal()
 }
 
-func (r *Repl) start() {
+func (r *Repl) startLocal() {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Ark REPL started. Type 'help' for commands.")
 
 	for {
 		fmt.Print("> ")
 		if !scanner.Scan() {
-			break // EOF or error
+			break
 		}
-
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
 			continue
 		}
 
-		r.handleCommand(line)
+		var out strings.Builder
+		r.handleCommand(line, &out)
+		fmt.Print(out.String())
 	}
-
-	fmt.Println("REPL exited.")
 }
 
-func (r *Repl) handleCommand(cmd string) {
+// StartServer starts a server for the REPL.
+func (r *Repl) StartServer(addr string) {
+	go r.startServer(addr)
+}
+
+func (r *Repl) startServer(addr string) error {
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("failed to start REPL server: %w", err)
+	}
+	fmt.Println("REPL server listening on", addr)
+
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				fmt.Println("REPL connection error:", err)
+				continue
+			}
+			go r.handleConnection(conn)
+		}
+	}()
+
+	return nil
+}
+
+func (r *Repl) handleConnection(conn net.Conn) {
+	defer conn.Close()
+	scanner := bufio.NewScanner(conn)
+	writer := bufio.NewWriter(conn)
+
+	writer.WriteString("Ark REPL connected. Type 'help' for commands.\n")
+	writer.Flush()
+
+	for {
+		writer.WriteString(">\n")
+		writer.Flush()
+
+		if !scanner.Scan() {
+			break
+		}
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		var out strings.Builder
+		r.handleCommand(line, &out)
+		writer.WriteString(out.String())
+		writer.Flush()
+	}
+}
+
+func (r *Repl) handleCommand(cmd string, out *strings.Builder) {
 	cmdName, args := parse(cmd)
 
-	if command, ok := commands[cmdName]; ok {
-		command.exec(r, args)
+	if command, ok := r.commands[cmdName]; ok {
+		r.execCommand(command, args, out)
 	} else {
-		fmt.Println("Unknown command:", cmd)
+		out.WriteString("Unknown command: " + cmd + "\n")
 	}
+}
+
+func (r *Repl) execCommand(cmd Command, args []string, out *strings.Builder) {
+	done := make(chan struct{})
+	r.channel <- func(world *ecs.World) {
+		cmd.Execute(r, args, out)
+		close(done)
+	}
+	<-done
 }
 
 func parse(cmd string) (string, []string) {
@@ -107,13 +185,4 @@ func parseSlice(tokens []string) (string, []string, bool) {
 	}
 
 	return cmdName, args, true
-}
-
-func (r *Repl) execCommand(fn func(*ecs.World)) {
-	done := make(chan struct{})
-	r.channel <- func(world *ecs.World) {
-		fn(world)
-		close(done)
-	}
-	<-done
 }
