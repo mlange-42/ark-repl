@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"strings"
 
 	repl "github.com/mlange-42/ark-inspect"
 	"github.com/mlange-42/ark-tools/app"
@@ -36,17 +36,17 @@ func main() {
 	app.World.NewEntities(100, nil)
 
 	callbacks := repl.Callbacks{
-		Pause: func() {
+		Pause: func(out *strings.Builder) {
 			app.Paused = true
-			fmt.Println("Simulation paused")
+			out.WriteString("Simulation paused\n")
 		},
-		Resume: func() {
+		Resume: func(out *strings.Builder) {
 			app.Paused = false
-			fmt.Println("Simulation resumed")
+			out.WriteString("Simulation resumed\n")
 		},
-		Stop: func() {
+		Stop: func(out *strings.Builder) {
 			ecs.GetResource[resource.Termination](&app.World).Terminate = true
-			fmt.Println("Simulation terminated")
+			out.WriteString("Simulation terminated\n")
 		},
 	}
 
@@ -54,6 +54,7 @@ func main() {
 
 	app.AddUISystem(&CommandSystem{repl})
 
+	//repl.StartServer(":9000")
 	repl.Start()
 	app.Run()
 }
