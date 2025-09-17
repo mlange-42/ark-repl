@@ -14,7 +14,6 @@ var commands = map[string]command{
 	"resume": &resume{},
 	"stop":   &stop{},
 	"help":   &help{},
-	"ticks":  &ticks{},
 	"list":   &list{},
 }
 

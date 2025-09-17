@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -16,21 +15,39 @@ type command interface {
 type pause struct{}
 
 func (c *pause) exec(repl *Repl, args []string) error {
-	repl.execFunc(repl.callbacks.Pause)
+	repl.execCommand(func(world *ecs.World) {
+		if len(args) > 0 {
+			fmt.Println("Command has no subcommands and no arguments")
+			return
+		}
+		repl.callbacks.Pause()
+	})
 	return nil
 }
 
 type resume struct{}
 
 func (c *resume) exec(repl *Repl, args []string) error {
-	repl.execFunc(repl.callbacks.Resume)
+	repl.execCommand(func(world *ecs.World) {
+		if len(args) > 0 {
+			fmt.Println("Command has no subcommands and no arguments")
+			return
+		}
+		repl.callbacks.Resume()
+	})
 	return nil
 }
 
 type stop struct{}
 
 func (c *stop) exec(repl *Repl, args []string) error {
-	repl.execFunc(repl.callbacks.Stop)
+	repl.execCommand(func(world *ecs.World) {
+		if len(args) > 0 {
+			fmt.Println("Command has no subcommands and no arguments")
+			return
+		}
+		repl.callbacks.Stop()
+	})
 	return nil
 }
 
@@ -38,21 +55,17 @@ type help struct{}
 
 func (c *help) exec(repl *Repl, args []string) error {
 	repl.execCommand(func(world *ecs.World) {
+		if len(args) > 0 {
+			fmt.Println("Command has no subcommands and no arguments")
+			return
+		}
 		cmds := []string{}
 		for cmd := range commands {
 			cmds = append(cmds, cmd)
 		}
 		slices.Sort(cmds)
-		fmt.Println("Commands: ", strings.Join(cmds, ", "))
-	})
-	return nil
-}
-
-type ticks struct{}
-
-func (c *ticks) exec(repl *Repl, args []string) error {
-	repl.execCommand(func(world *ecs.World) {
-		fmt.Println("Tick: ", ecs.GetResource[resource.Tick](world).Tick)
+		fmt.Println("Commands:", strings.Join(cmds, ", "))
+		fmt.Println("For help on a command, use: <command> help")
 	})
 	return nil
 }
@@ -90,7 +103,7 @@ func (c *listHelp) exec(repl *Repl, args []string) error {
 			cmds = append(cmds, cmd)
 		}
 		slices.Sort(cmds)
-		fmt.Println("list subcommands: ", strings.Join(cmds, ", "))
+		fmt.Println("list subcommands:", strings.Join(cmds, ", "))
 	})
 	return nil
 }
@@ -121,7 +134,7 @@ func (c *listResources) exec(repl *Repl, args []string) error {
 		cnt := 0
 		for _, id := range allRes {
 			res := world.Resources().Get(id)
-			fmt.Printf("%#v\n", res)
+			fmt.Printf("%d: %#v\n", id.Index(), res)
 			cnt++
 		}
 		if cnt == 0 {
@@ -135,11 +148,12 @@ type listComponents struct{}
 
 func (c *listComponents) exec(repl *Repl, args []string) error {
 	repl.execCommand(func(world *ecs.World) {
+		ecs.ComponentID[list](world)
 		allComp := ecs.ComponentIDs(world)
 		cnt := 0
 		for _, id := range allComp {
 			if info, ok := ecs.ComponentInfo(world, id); ok {
-				fmt.Println(info.Type.Name())
+				fmt.Printf("%d: %s\n", id.Index(), info.Type.Name())
 				cnt++
 			}
 		}
