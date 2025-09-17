@@ -27,13 +27,13 @@
 
 ## Installation
 
-### Library
+Add the library to your Ark application:
 
 ```
 go get github.com/mlange-42/ark-inspect
 ```
 
-### CLI for using from a second terminal
+Install CLI for a REPL in a separate terminal:
 
 ```
 go install github.com/mlange-42/ark-inspect/cmd/ark
