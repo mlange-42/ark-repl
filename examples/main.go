@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	arkrepl "github.com/mlange-42/ark-repl"
+	repl "github.com/mlange-42/ark-repl"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
@@ -11,7 +11,7 @@ import (
 
 // CommandSystem executes commands
 type CommandSystem struct {
-	Repl *arkrepl.Repl
+	Repl *repl.Repl
 }
 
 // InitializeUI the system.
@@ -33,7 +33,9 @@ func main() {
 	app.TPS = 10
 	app.FPS = 10
 
-	callbacks := arkrepl.Callbacks{
+	app.World.NewEntities(100, nil)
+
+	callbacks := repl.Callbacks{
 		Pause: func() {
 			app.Paused = true
 			fmt.Println("Simulation paused")
@@ -48,7 +50,7 @@ func main() {
 		},
 	}
 
-	repl := arkrepl.NewRepl(&app.World, callbacks)
+	repl := repl.NewRepl(&app.World, callbacks)
 
 	app.AddUISystem(&CommandSystem{repl})
 

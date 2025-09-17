@@ -109,18 +109,6 @@ func parseSlice(tokens []string) (string, []string, bool) {
 	return cmdName, args, true
 }
 
-func (r *Repl) execFunc(fn func()) {
-	if fn == nil {
-		return
-	}
-	done := make(chan struct{})
-	r.channel <- func(world *ecs.World) {
-		fn()
-		close(done)
-	}
-	<-done
-}
-
 func (r *Repl) execCommand(fn func(*ecs.World)) {
 	done := make(chan struct{})
 	r.channel <- func(world *ecs.World) {

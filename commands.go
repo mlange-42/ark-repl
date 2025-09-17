@@ -3,6 +3,7 @@ package arkrepl
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/mlange-42/ark/ecs"
@@ -20,6 +21,10 @@ func (c *pause) exec(repl *Repl, args []string) error {
 			fmt.Println("Command has no subcommands and no arguments")
 			return
 		}
+		if repl.callbacks.Pause == nil {
+			fmt.Println("No pause callback provided")
+			return
+		}
 		repl.callbacks.Pause()
 	})
 	return nil
@@ -33,6 +38,10 @@ func (c *resume) exec(repl *Repl, args []string) error {
 			fmt.Println("Command has no subcommands and no arguments")
 			return
 		}
+		if repl.callbacks.Resume == nil {
+			fmt.Println("No resume callback provided")
+			return
+		}
 		repl.callbacks.Resume()
 	})
 	return nil
@@ -44,6 +53,10 @@ func (c *stop) exec(repl *Repl, args []string) error {
 	repl.execCommand(func(world *ecs.World) {
 		if len(args) > 0 {
 			fmt.Println("Command has no subcommands and no arguments")
+			return
+		}
+		if repl.callbacks.Stop == nil {
+			fmt.Println("No stop callback provided")
 			return
 		}
 		repl.callbacks.Stop()
@@ -111,16 +124,34 @@ func (c *listHelp) exec(repl *Repl, args []string) error {
 type listEntities struct{}
 
 func (c *listEntities) exec(repl *Repl, args []string) error {
+	limit := 25
+	if len(args) > 0 {
+		var err error
+		limit, err = strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Printf("Invalid argument '%s'\n", args[0])
+			return nil
+		}
+	}
 	repl.execCommand(func(world *ecs.World) {
 		filter := ecs.NewUnsafeFilter(world)
 		query := filter.Query()
 		cnt := 0
+		total := query.Count()
 		for query.Next() {
 			fmt.Println(query.Entity())
 			cnt++
+			if cnt >= limit {
+				query.Close()
+				break
+			}
 		}
 		if cnt == 0 {
 			fmt.Println("No entities")
+		} else {
+			if total > cnt {
+				fmt.Printf("Skipping %d of %d entities\n", total-cnt, total)
+			}
 		}
 	})
 	return nil
