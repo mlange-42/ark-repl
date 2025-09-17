@@ -6,34 +6,30 @@ import (
 	"os"
 	"strings"
 
+	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Event type
-type Event uint8
-
-const (
-	// Pause event
-	Pause Event = iota
-	// Resume event
-	Resume
-	// Stop event
-	Stop
-)
+// Callbacks for simulation loop control.
+type Callbacks struct {
+	Pause  func()
+	Resume func()
+	Stop   func()
+}
 
 // Repl is the main entry point.
 type Repl struct {
-	Events   chan Event
-	commands chan func(*ecs.World)
-	world    *ecs.World
+	commands  chan func(*ecs.World)
+	world     *ecs.World
+	callbacks Callbacks
 }
 
 // NewRepl creates a new [Repl].
-func NewRepl(world *ecs.World) *Repl {
+func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 	repl := Repl{
-		Events:   make(chan Event),
-		commands: make(chan func(*ecs.World)),
-		world:    world,
+		commands:  make(chan func(*ecs.World)),
+		world:     world,
+		callbacks: callbacks,
 	}
 
 	return &repl
@@ -80,19 +76,39 @@ func (r *Repl) start() {
 func handleCommand(cmd string, repl *Repl) {
 	switch cmd {
 	case "pause":
-		repl.Events <- Pause
+		repl.execFunc(repl.callbacks.Pause)
 	case "resume":
-		repl.Events <- Resume
+		repl.execFunc(repl.callbacks.Resume)
 	case "stop":
-		repl.Events <- Stop
+		repl.execFunc(repl.callbacks.Stop)
 	case "tick":
-		repl.commands <- func(world *ecs.World) {
-			fmt.Println("Manual tick executed.")
-			// RunSystems(world) if you want manual stepping
-		}
+		repl.execCommand(func(world *ecs.World) {
+			fmt.Println("Tick: ", ecs.GetResource[resource.Tick](world).Tick)
+		})
 	case "help":
 		fmt.Println("Commands: pause, resume, stop, tick, help")
 	default:
 		fmt.Println("Unknown command:", cmd)
 	}
+}
+
+func (r *Repl) execFunc(fn func()) {
+	if fn == nil {
+		return
+	}
+	done := make(chan struct{})
+	r.commands <- func(world *ecs.World) {
+		fn()
+		close(done)
+	}
+	<-done
+}
+
+func (r *Repl) execCommand(fn func(*ecs.World)) {
+	done := make(chan struct{})
+	r.commands <- func(world *ecs.World) {
+		fn(world)
+		close(done)
+	}
+	<-done
 }
