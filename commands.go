@@ -9,13 +9,14 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-type command interface {
-	exec(repl *Repl, args []string, out *strings.Builder)
+// Command interface.
+type Command interface {
+	Execute(repl *Repl, args []string, out *strings.Builder)
 }
 
 type pause struct{}
 
-func (c *pause) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *pause) Execute(repl *Repl, args []string, out *strings.Builder) {
 	if len(args) > 0 {
 		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
 		return
@@ -30,7 +31,7 @@ func (c *pause) exec(repl *Repl, args []string, out *strings.Builder) {
 
 type resume struct{}
 
-func (c *resume) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *resume) Execute(repl *Repl, args []string, out *strings.Builder) {
 	if len(args) > 0 {
 		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
 		return
@@ -45,7 +46,7 @@ func (c *resume) exec(repl *Repl, args []string, out *strings.Builder) {
 
 type stop struct{}
 
-func (c *stop) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *stop) Execute(repl *Repl, args []string, out *strings.Builder) {
 	if len(args) > 0 {
 		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
 		return
@@ -60,13 +61,13 @@ func (c *stop) exec(repl *Repl, args []string, out *strings.Builder) {
 
 type help struct{}
 
-func (c *help) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *help) Execute(repl *Repl, args []string, out *strings.Builder) {
 	if len(args) > 0 {
 		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
 		return
 	}
-	cmds := make([]string, 0, len(commands))
-	for cmd := range commands {
+	cmds := make([]string, 0, len(repl.commands))
+	for cmd := range repl.commands {
 		cmds = append(cmds, cmd)
 	}
 	slices.Sort(cmds)
@@ -74,7 +75,7 @@ func (c *help) exec(repl *Repl, args []string, out *strings.Builder) {
 	fmt.Fprint(out, "For help on a command, use: <command> help\n")
 }
 
-var listCommands = map[string]command{
+var listCommands = map[string]Command{
 	"help":       &listHelp{},
 	"entities":   &listEntities{},
 	"resources":  &listResources{},
@@ -83,14 +84,14 @@ var listCommands = map[string]command{
 
 type list struct{}
 
-func (c *list) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *list) Execute(repl *Repl, args []string, out *strings.Builder) {
 	subCmd, subArgs, ok := parseSlice(args)
 	if !ok {
-		(&listHelp{}).exec(repl, subArgs, out)
+		(&listHelp{}).Execute(repl, subArgs, out)
 		return
 	}
 	if command, ok := listCommands[subCmd]; ok {
-		command.exec(repl, subArgs, out)
+		command.Execute(repl, subArgs, out)
 	} else {
 		fmt.Fprintf(out, "Unknown subcommand: %s\n", subCmd)
 	}
@@ -98,7 +99,7 @@ func (c *list) exec(repl *Repl, args []string, out *strings.Builder) {
 
 type listHelp struct{}
 
-func (c *listHelp) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *listHelp) Execute(repl *Repl, args []string, out *strings.Builder) {
 	cmds := make([]string, 0, len(listCommands))
 	for cmd := range listCommands {
 		cmds = append(cmds, cmd)
@@ -109,7 +110,7 @@ func (c *listHelp) exec(repl *Repl, args []string, out *strings.Builder) {
 
 type listEntities struct{}
 
-func (c *listEntities) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *listEntities) Execute(repl *Repl, args []string, out *strings.Builder) {
 	limit := 25
 	if len(args) > 0 {
 		var err error
@@ -140,7 +141,7 @@ func (c *listEntities) exec(repl *Repl, args []string, out *strings.Builder) {
 
 type listResources struct{}
 
-func (c *listResources) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *listResources) Execute(repl *Repl, args []string, out *strings.Builder) {
 	allRes := ecs.ResourceIDs(repl.World())
 	cnt := 0
 	for _, id := range allRes {
@@ -155,7 +156,7 @@ func (c *listResources) exec(repl *Repl, args []string, out *strings.Builder) {
 
 type listComponents struct{}
 
-func (c *listComponents) exec(repl *Repl, args []string, out *strings.Builder) {
+func (c *listComponents) Execute(repl *Repl, args []string, out *strings.Builder) {
 	allComp := ecs.ComponentIDs(repl.World())
 	cnt := 0
 	for _, id := range allComp {

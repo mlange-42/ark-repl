@@ -10,14 +10,6 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-var commands = map[string]command{
-	"pause":  &pause{},
-	"resume": &resume{},
-	"stop":   &stop{},
-	"help":   &help{},
-	"list":   &list{},
-}
-
 // Callbacks for simulation loop control.
 type Callbacks struct {
 	Pause  func(out *strings.Builder)
@@ -30,6 +22,7 @@ type Repl struct {
 	channel   chan func(*ecs.World)
 	world     *ecs.World
 	callbacks Callbacks
+	commands  map[string]Command
 }
 
 // NewRepl creates a new [Repl].
@@ -38,6 +31,13 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 		channel:   make(chan func(*ecs.World)),
 		world:     world,
 		callbacks: callbacks,
+		commands: map[string]Command{
+			"pause":  &pause{},
+			"resume": &resume{},
+			"stop":   &stop{},
+			"help":   &help{},
+			"list":   &list{},
+		},
 	}
 	return &repl
 }
@@ -45,6 +45,17 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 // World returns the World associated to this REPL.
 func (r *Repl) World() *ecs.World {
 	return r.world
+}
+
+// AddCommand adds a command to the REPL.
+//
+// Returns an error if a command with the same name is already registered.
+func (r *Repl) AddCommand(name string, cmd Command) error {
+	if _, ok := r.commands[name]; ok {
+		return fmt.Errorf("command '%s' is already registered", name)
+	}
+	r.commands[name] = cmd
+	return nil
 }
 
 // RunCommands runs all commands.
@@ -140,17 +151,17 @@ func (r *Repl) handleConnection(conn net.Conn) {
 func (r *Repl) handleCommand(cmd string, out *strings.Builder) {
 	cmdName, args := parse(cmd)
 
-	if command, ok := commands[cmdName]; ok {
+	if command, ok := r.commands[cmdName]; ok {
 		r.execCommand(command, args, out)
 	} else {
 		out.WriteString("Unknown command: " + cmd + "\n")
 	}
 }
 
-func (r *Repl) execCommand(cmd command, args []string, out *strings.Builder) {
+func (r *Repl) execCommand(cmd Command, args []string, out *strings.Builder) {
 	done := make(chan struct{})
 	r.channel <- func(world *ecs.World) {
-		cmd.exec(r, args, out)
+		cmd.Execute(r, args, out)
 		close(done)
 	}
 	<-done
