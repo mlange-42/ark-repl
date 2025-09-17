@@ -7,7 +7,7 @@
 [![MIT license](https://img.shields.io/badge/MIT-brightgreen?label=license)](https://github.com/mlange-42/ark-inspect/blob/main/LICENSE-MIT)
 [![Apache 2.0 license](https://img.shields.io/badge/Apache%202.0-brightgreen?label=license)](https://github.com/mlange-42/ark-inspect/blob/main/LICENSE-APACHE)
 
-*Ark Inspect* provides a REPL for inspection of running applications using the [Ark](https://github.com/mlange-42/ark) Entity Component System (ECS).
+*Ark Inspect* provides a REPL for inspecting applications made with the [Ark](https://github.com/mlange-42/ark) Entity Component System (ECS).
 
 <div align="center">
 
@@ -41,7 +41,13 @@ go install github.com/mlange-42/ark-inspect/cmd/ark
 
 ## Usage
 
-See the [API docs](https://pkg.go.dev/github.com/mlange-42/ark-inspect) and [examples](https://github.com/mlange-42/ark-inspect/tree/main/examples) for details.
+See the [API docs](https://pkg.go.dev/github.com/mlange-42/ark-inspect) and [examples](https://github.com/mlange-42/ark-inspect/tree/main/examples) for library usage.
+
+For starting the REPL in a separate terminal, run this after starting your Ark application:
+
+```
+ark
+```
 
 ## License
 
