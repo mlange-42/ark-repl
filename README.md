@@ -19,10 +19,11 @@
 
 ## Features
 
-* Scheduler for running logic and UI systems with independent update rates.
-* Interfaces for ECS systems and observers.
-* Ready-to-use systems for common tasks like writing CSV files or terminating a simulation.
-* Common ECS resources, like central PRNG source or the current update tick.
+- REPL (Read-Evaluate-Print-Loop).
+- Interactive inspection of World internals.
+- Command help inside the REPL.
+- Can control the update loop (pause, resume, stop).
+- Can connect from a separate terminal.
 
 ## Installation
 
@@ -40,7 +41,7 @@ go install github.com/mlange-42/ark-inspect/cmd/ark
 
 ## Usage
 
-See the [API docs](https://pkg.go.dev/github.com/mlange-42/ark) and [examples](https://github.com/mlange-42/ark/tree/main/examples) for details.
+See the [API docs](https://pkg.go.dev/github.com/mlange-42/ark-inspect) and [examples](https://github.com/mlange-42/ark-inspect/tree/main/examples) for details.
 
 ## License
 
