@@ -1,0 +1,5 @@
+*.exe
+*.pprof
+*.out
+.hugo_build.lock
+/docs/public/
