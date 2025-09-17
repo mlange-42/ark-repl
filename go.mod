@@ -1,4 +1,4 @@
-module github.com/mlange-42/ark-repl
+module github.com/mlange-42/ark-inspect
 
 go 1.24.0
 

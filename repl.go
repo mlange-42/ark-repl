@@ -1,4 +1,4 @@
-package arkrepl
+package arkinspect
 
 import (
 	"bufio"
