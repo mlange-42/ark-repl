@@ -11,8 +11,11 @@ import (
 
 // Command interface.
 type Command interface {
+	// Execute the command. Write any text output to out.
 	Execute(repl *Repl, args []string, out *strings.Builder)
+	// Help writes command help to out.
 	Help(repl *Repl, out *strings.Builder)
+	// SubCommands returns a map of all subcommands.
 	SubCommands(repl *Repl) map[string]Command
 }
 
