@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/mlange-42/ark-inspect/repl"
+	"github.com/mlange-42/ark-repl/repl"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"

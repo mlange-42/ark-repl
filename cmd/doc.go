@@ -1,2 +1,2 @@
-// Package cmd provides commands for using ark-inspect.
+// Package cmd provides commands for using ark-repl.
 package cmd

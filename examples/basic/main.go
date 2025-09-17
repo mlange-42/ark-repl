@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mlange-42/ark-inspect/repl"
+	"github.com/mlange-42/ark-repl/repl"
 	"github.com/mlange-42/ark/ecs"
 )
 
