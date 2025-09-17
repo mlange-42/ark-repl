@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 
+	"github.com/mlange-42/ark-repl/examples"
 	"github.com/mlange-42/ark-repl/repl"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/resource"
@@ -14,7 +15,8 @@ func main() {
 	app.TPS = 10
 	app.FPS = 10
 
-	app.World.NewEntities(100, nil)
+	// Populate the world so there is something to see.
+	examples.Populate(&app.World)
 
 	// Callbacks for loop control.
 	callbacks := repl.Callbacks{

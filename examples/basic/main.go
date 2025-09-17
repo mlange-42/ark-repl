@@ -4,13 +4,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mlange-42/ark-repl/examples"
 	"github.com/mlange-42/ark-repl/repl"
 	"github.com/mlange-42/ark/ecs"
 )
 
 func main() {
 	world := ecs.NewWorld()
-	world.NewEntities(100, nil)
+
+	// Populate the world so there is something to see.
+	examples.Populate(&world)
 
 	pause := false
 	stop := false
