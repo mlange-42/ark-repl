@@ -14,6 +14,22 @@ type Command interface {
 	Execute(repl *Repl, args []string, out *strings.Builder)
 }
 
+type help struct{}
+
+func (c *help) Execute(repl *Repl, args []string, out *strings.Builder) {
+	if len(args) > 0 {
+		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
+		return
+	}
+	cmds := make([]string, 0, len(repl.commands))
+	for cmd := range repl.commands {
+		cmds = append(cmds, cmd)
+	}
+	slices.Sort(cmds)
+	fmt.Fprintf(out, "Commands: %s\n", strings.Join(cmds, ", "))
+	fmt.Fprint(out, "For help on a command, use: <command> help\n")
+}
+
 type pause struct{}
 
 func (c *pause) Execute(repl *Repl, args []string, out *strings.Builder) {
@@ -59,25 +75,13 @@ func (c *stop) Execute(repl *Repl, args []string, out *strings.Builder) {
 	fmt.Fprint(out, "Simulation terminated\n")
 }
 
-type help struct{}
+type stats struct{}
 
-func (c *help) Execute(repl *Repl, args []string, out *strings.Builder) {
+func (c *stats) Execute(repl *Repl, args []string, out *strings.Builder) {
 	if len(args) > 0 {
 		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
 		return
 	}
-	cmds := make([]string, 0, len(repl.commands))
-	for cmd := range repl.commands {
-		cmds = append(cmds, cmd)
-	}
-	slices.Sort(cmds)
-	fmt.Fprintf(out, "Commands: %s\n", strings.Join(cmds, ", "))
-	fmt.Fprint(out, "For help on a command, use: <command> help\n")
-}
-
-type stats struct{}
-
-func (c *stats) Execute(repl *Repl, args []string, out *strings.Builder) {
 	stats := repl.World().Stats()
 	fmt.Fprint(out, stats)
 }
@@ -107,6 +111,10 @@ func (c *list) Execute(repl *Repl, args []string, out *strings.Builder) {
 type listHelp struct{}
 
 func (c *listHelp) Execute(repl *Repl, args []string, out *strings.Builder) {
+	if len(args) > 0 {
+		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
+		return
+	}
 	cmds := make([]string, 0, len(listCommands))
 	for cmd := range listCommands {
 		cmds = append(cmds, cmd)
@@ -149,6 +157,10 @@ func (c *listEntities) Execute(repl *Repl, args []string, out *strings.Builder) 
 type listResources struct{}
 
 func (c *listResources) Execute(repl *Repl, args []string, out *strings.Builder) {
+	if len(args) > 0 {
+		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
+		return
+	}
 	allRes := ecs.ResourceIDs(repl.World())
 	cnt := 0
 	for _, id := range allRes {
@@ -164,6 +176,10 @@ func (c *listResources) Execute(repl *Repl, args []string, out *strings.Builder)
 type listComponents struct{}
 
 func (c *listComponents) Execute(repl *Repl, args []string, out *strings.Builder) {
+	if len(args) > 0 {
+		fmt.Fprint(out, "Command has no subcommands and no arguments\n")
+		return
+	}
 	allComp := ecs.ComponentIDs(repl.World())
 	cnt := 0
 	for _, id := range allComp {
