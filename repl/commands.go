@@ -1,4 +1,4 @@
-package arkinspect
+package repl
 
 import (
 	"fmt"
