@@ -54,7 +54,7 @@ func main() {
 
 	app.AddUISystem(&CommandSystem{repl})
 
-	//repl.StartServer(":9000")
-	repl.Start()
+	repl.StartServer(":9000")
+	//repl.Start()
 	app.Run()
 }
