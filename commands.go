@@ -75,6 +75,13 @@ func (c *help) Execute(repl *Repl, args []string, out *strings.Builder) {
 	fmt.Fprint(out, "For help on a command, use: <command> help\n")
 }
 
+type stats struct{}
+
+func (c *stats) Execute(repl *Repl, args []string, out *strings.Builder) {
+	stats := repl.World().Stats()
+	fmt.Fprint(out, stats)
+}
+
 var listCommands = map[string]Command{
 	"help":       &listHelp{},
 	"entities":   &listEntities{},
