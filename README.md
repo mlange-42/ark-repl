@@ -40,6 +40,8 @@ go install github.com/mlange-42/ark-inspect/cmd/ark
 
 ## Usage
 
+See the [API docs](https://pkg.go.dev/github.com/mlange-42/ark) and [examples](https://github.com/mlange-42/ark/tree/main/examples) for details.
+
 ## License
 
 This project is distributed under the [MIT license](./LICENSE-MIT) and the [Apache 2.0 license](./LICENSE-APACHE), as your options.
