@@ -6,9 +6,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
+
+var commands = map[string]command{
+	"pause":  &pause{},
+	"resume": &resume{},
+	"stop":   &stop{},
+	"help":   &help{},
+	"ticks":  &ticks{},
+	"list":   &list{},
+}
 
 // Callbacks for simulation loop control.
 type Callbacks struct {
@@ -19,7 +27,7 @@ type Callbacks struct {
 
 // Repl is the main entry point.
 type Repl struct {
-	commands  chan func(*ecs.World)
+	channel   chan func(*ecs.World)
 	world     *ecs.World
 	callbacks Callbacks
 }
@@ -27,11 +35,10 @@ type Repl struct {
 // NewRepl creates a new [Repl].
 func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 	repl := Repl{
-		commands:  make(chan func(*ecs.World)),
+		channel:   make(chan func(*ecs.World)),
 		world:     world,
 		callbacks: callbacks,
 	}
-
 	return &repl
 }
 
@@ -39,7 +46,7 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 func (r *Repl) RunCommands() {
 	for {
 		select {
-		case cmd := <-r.commands:
+		case cmd := <-r.channel:
 			cmd(r.world)
 		default:
 			return
@@ -67,29 +74,40 @@ func (r *Repl) start() {
 			continue
 		}
 
-		handleCommand(line, r)
+		r.handleCommand(line)
 	}
 
 	fmt.Println("REPL exited.")
 }
 
-func handleCommand(cmd string, repl *Repl) {
-	switch cmd {
-	case "pause":
-		repl.execFunc(repl.callbacks.Pause)
-	case "resume":
-		repl.execFunc(repl.callbacks.Resume)
-	case "stop":
-		repl.execFunc(repl.callbacks.Stop)
-	case "tick":
-		repl.execCommand(func(world *ecs.World) {
-			fmt.Println("Tick: ", ecs.GetResource[resource.Tick](world).Tick)
-		})
-	case "help":
-		fmt.Println("Commands: pause, resume, stop, tick, help")
-	default:
+func (r *Repl) handleCommand(cmd string) {
+	cmdName, args := parse(cmd)
+
+	if command, ok := commands[cmdName]; ok {
+		command.exec(r, args)
+	} else {
 		fmt.Println("Unknown command:", cmd)
 	}
+}
+
+func parse(cmd string) (string, []string) {
+	tokens := strings.Split(cmd, " ")
+	name, args, _ := parseSlice(tokens)
+	return name, args
+}
+
+func parseSlice(tokens []string) (string, []string, bool) {
+	if len(tokens) == 0 {
+		return "", nil, false
+	}
+	cmdName := tokens[0]
+
+	var args []string
+	if len(tokens) > 1 {
+		args = tokens[1:]
+	}
+
+	return cmdName, args, true
 }
 
 func (r *Repl) execFunc(fn func()) {
@@ -97,7 +115,7 @@ func (r *Repl) execFunc(fn func()) {
 		return
 	}
 	done := make(chan struct{})
-	r.commands <- func(world *ecs.World) {
+	r.channel <- func(world *ecs.World) {
 		fn()
 		close(done)
 	}
@@ -106,7 +124,7 @@ func (r *Repl) execFunc(fn func()) {
 
 func (r *Repl) execCommand(fn func(*ecs.World)) {
 	done := make(chan struct{})
-	r.commands <- func(world *ecs.World) {
+	r.channel <- func(world *ecs.World) {
 		fn(world)
 		close(done)
 	}
