@@ -44,7 +44,7 @@ func (c pause) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c pause) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Pause the connected simulation")
+	fmt.Fprintln(out, "Pause the connected simulation.")
 }
 
 type resume struct{}
@@ -59,7 +59,7 @@ func (c resume) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c resume) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Resume the connected simulation")
+	fmt.Fprintln(out, "Resume the connected simulation.")
 }
 
 type stop struct{}
@@ -74,7 +74,7 @@ func (c stop) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c stop) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Stop the connected simulation")
+	fmt.Fprintln(out, "Stop the connected simulation.")
 }
 
 type stats struct{}
@@ -85,7 +85,7 @@ func (c stats) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c stats) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Prints world statistics")
+	fmt.Fprintln(out, "Prints world statistics.")
 }
 
 type list struct {
