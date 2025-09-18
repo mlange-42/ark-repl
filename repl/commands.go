@@ -9,6 +9,16 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
+type command interface {
+	Execute(repl *Repl, out *strings.Builder)
+	Help(repl *Repl, out *strings.Builder)
+}
+
+type hlp struct{}
+
+func (c hlp) Execute(repl *Repl, out *strings.Builder) {}
+func (c hlp) Help(repl *Repl, out *strings.Builder)    {}
+
 // Command interface.
 type Command interface {
 	// Execute the command. Write any text output to out.
