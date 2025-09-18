@@ -22,8 +22,12 @@ func (c help) Execute(repl *Repl, out *strings.Builder) {
 		cmds = append(cmds, cmd)
 	}
 	slices.Sort(cmds)
-	fmt.Fprintf(out, "Commands: %s\n", strings.Join(cmds, ", "))
-	fmt.Fprint(out, "For help on a command, use: help <command>\n")
+
+	fmt.Fprint(out, "For help on a command, use: help <command>\n\n")
+	fmt.Fprintf(out, "Commands:\n")
+	for _, c := range cmds {
+		fmt.Fprintf(out, "  %s\n", c)
+	}
 }
 
 func (c help) Help(repl *Repl, out *strings.Builder) {}
@@ -40,7 +44,7 @@ func (c pause) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c pause) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Pause the connected simulation")
+	fmt.Fprintln(out, "Pause the connected simulation.")
 }
 
 type resume struct{}
@@ -55,7 +59,7 @@ func (c resume) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c resume) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Resume the connected simulation")
+	fmt.Fprintln(out, "Resume the connected simulation.")
 }
 
 type stop struct{}
@@ -70,7 +74,7 @@ func (c stop) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c stop) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Stop the connected simulation")
+	fmt.Fprintln(out, "Stop the connected simulation.")
 }
 
 type stats struct{}
@@ -81,7 +85,7 @@ func (c stats) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c stats) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Prints world statistics")
+	fmt.Fprintln(out, "Prints world statistics.")
 }
 
 type list struct {
@@ -96,14 +100,13 @@ func (c list) Execute(repl *Repl, out *strings.Builder) {
 
 func (c list) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Lists various things.")
-	fmt.Fprintln(out, "Subcommands: entities, components, resources")
 }
 
 type listEntities struct {
-	N         int `default:"25"`
-	With      []string
-	Without   []string
-	Exclusive bool
+	N         int      `default:"25" help:"Maximum number of entities to print."`
+	With      []string `help:"Only entities with these components."`
+	Without   []string `help:"Only entities without these components."`
+	Exclusive bool     `help:"Only entities with exactly the components in 'with'."`
 }
 
 func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
@@ -145,7 +148,7 @@ func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c listEntities) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Lists entities. Optional argument `n` limits the number of entities to print. Default 25")
+	fmt.Fprintln(out, "Lists entities.")
 }
 
 type listResources struct{}
@@ -174,7 +177,7 @@ func (c listComponents) Execute(repl *Repl, out *strings.Builder) {
 	cnt := 0
 	for _, id := range allComp {
 		if info, ok := ecs.ComponentInfo(repl.World(), id); ok {
-			fmt.Fprintf(out, "%d: %s\n", id.Index(), info.Type.Name())
+			fmt.Fprintf(out, "%d: %s\n", id.Index(), info.Type.String())
 			cnt++
 		}
 	}

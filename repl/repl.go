@@ -162,7 +162,7 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) {
 		return
 	}
 	if help {
-		cmd.Help(r, out)
+		extractHelp(r, cmd, out)
 		return
 	}
 	r.execCommand(cmd, out)

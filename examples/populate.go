@@ -24,11 +24,17 @@ type Grid struct {
 	Height int
 }
 
+// Tick resource.
+type Tick struct {
+	Tick int
+}
+
 // Populate the world so there is something to see.
 func Populate(world *ecs.World) {
 	grid := Grid{Width: 100, Height: 60}
-
 	ecs.AddResource(world, &grid)
+
+	ecs.AddResource(world, &Tick{})
 
 	posMap := ecs.NewMap1[Position](world)
 	posVelMap := ecs.NewMap2[Position, Velocity](world)
