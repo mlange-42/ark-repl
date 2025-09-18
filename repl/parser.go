@@ -122,8 +122,41 @@ func setField(field reflect.Value, kv []string) error {
 		}
 	case reflect.String:
 		field.SetString(kv[1])
+	case reflect.Slice:
+		elemType := field.Type().Elem()
+		rawValues := strings.Split(kv[1], ",")
+		slice := reflect.MakeSlice(field.Type(), 0, len(rawValues))
+		for _, raw := range rawValues {
+			var val reflect.Value
+			switch elemType.Kind() {
+			case reflect.String:
+				val = reflect.ValueOf(raw)
+			case reflect.Bool:
+				b, err := strconv.ParseBool(raw)
+				if err != nil {
+					return fmt.Errorf("invalid value for []bool option '%s': %s", kv[0], raw)
+				}
+				val = reflect.ValueOf(b)
+			case reflect.Int:
+				i, err := strconv.Atoi(raw)
+				if err != nil {
+					return fmt.Errorf("invalid value for []int option '%s': %s", kv[0], raw)
+				}
+				val = reflect.ValueOf(i)
+			case reflect.Float64:
+				f, err := strconv.ParseFloat(raw, 64)
+				if err != nil {
+					return fmt.Errorf("invalid value for []float option '%s': %s", kv[0], raw)
+				}
+				val = reflect.ValueOf(f)
+			default:
+				return fmt.Errorf("unsupported slice element type: %s", elemType.Kind())
+			}
+			slice = reflect.Append(slice, val)
+		}
+		field.Set(slice)
 	default:
-		return fmt.Errorf("unsupported argument type %s", field.Kind().String())
+		return fmt.Errorf("unsupported argument type %s for option '%s'", field.Kind().String(), kv[0])
 	}
 	return nil
 }

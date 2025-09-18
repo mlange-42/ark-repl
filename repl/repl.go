@@ -25,20 +25,26 @@ type Repl struct {
 	commands  map[string]Command
 }
 
+var defaultCommands = map[string]Command{
+	"help":   help{},
+	"pause":  pause{},
+	"resume": resume{},
+	"stop":   stop{},
+	"stats":  stats{},
+	"list":   list{},
+}
+
 // NewRepl creates a new [Repl].
 func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
+	commands := map[string]Command{}
+	for k, v := range defaultCommands {
+		commands[k] = v
+	}
 	repl := Repl{
 		channel:   make(chan func(*ecs.World)),
 		world:     world,
 		callbacks: callbacks,
-		commands: map[string]Command{
-			"help":   help{},
-			"pause":  pause{},
-			"resume": resume{},
-			"stop":   stop{},
-			"stats":  stats{},
-			"list":   list{},
-		},
+		commands:  commands,
 	}
 	return &repl
 }

@@ -70,3 +70,13 @@ func TestParser(t *testing.T) {
 	assert.False(t, help)
 	assert.Equal(t, "repl.help{}", fmt.Sprintf("%#v", out))
 }
+
+func TestParserListEntities(t *testing.T) {
+	cmdString := "list entities with=Position,Velocity"
+	out, help, err := parseInput(cmdString, defaultCommands)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, out)
+	assert.False(t, help)
+	assert.Equal(t, "repl.listEntities{N:25, With:[]string{\"Position\", \"Velocity\"}, Without:[]string(nil), Exclusive:false}", fmt.Sprintf("%#v", out))
+}
