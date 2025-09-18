@@ -33,8 +33,8 @@ func (c subSubCmd) Execute(repl *Repl, out *strings.Builder) {}
 func (c subSubCmd) Help(repl *Repl, out *strings.Builder)    {}
 
 func TestParser(t *testing.T) {
-	allCommands := map[string]command{
-		"help": hlp{},
+	allCommands := map[string]Command{
+		"help": help{},
 		"cmd":  cmd{},
 	}
 
@@ -42,6 +42,7 @@ func TestParser(t *testing.T) {
 	out, help, err := parseInput(cmdString, allCommands)
 
 	assert.Nil(t, err)
+	assert.NotNil(t, out)
 	assert.False(t, help)
 	assert.Equal(t, "repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:\"test\"}", fmt.Sprintf("%#v", out))
 
@@ -49,6 +50,15 @@ func TestParser(t *testing.T) {
 	out, help, err = parseInput(cmdString, allCommands)
 
 	assert.Nil(t, err)
+	assert.NotNil(t, out)
 	assert.True(t, help)
 	assert.Equal(t, "repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:\"test\"}", fmt.Sprintf("%#v", out))
+
+	cmdString = "help"
+	out, help, err = parseInput(cmdString, allCommands)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, out)
+	assert.False(t, help)
+	assert.Equal(t, "repl.help{}", fmt.Sprintf("%#v", out))
 }

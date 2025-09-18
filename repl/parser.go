@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func parseInput(input string, commandRegistry map[string]command) (command, bool, error) {
+func parseInput(input string, commandRegistry map[string]Command) (Command, bool, error) {
 	tokens := strings.Fields(input)
 	if len(tokens) < 1 {
 		return nil, false, fmt.Errorf("no command provided")
@@ -22,14 +22,14 @@ func parseInput(input string, commandRegistry map[string]command) (command, bool
 	cmdVal := reflect.New(reflect.TypeOf(cmdStruct)).Elem()
 
 	if len(tokens) == 1 {
-		cmd, ok := cmdVal.Interface().(command)
+		cmd, ok := cmdVal.Interface().(Command)
 		if !ok {
-			return nil, false, fmt.Errorf("command %s does not implement interface", cmdName)
+			return nil, false, fmt.Errorf("command %s does not implement interface Command", cmdName)
 		}
 		return cmd, false, nil
 	}
 
-	if cmdVal.Type() == reflect.TypeFor[hlp]() {
+	if cmdVal.Type() == reflect.TypeFor[help]() {
 		cmd, _, err := parseInput(strings.Join(tokens[1:], " "), commandRegistry)
 		return cmd, true, err
 	}
@@ -44,7 +44,7 @@ func parseInput(input string, commandRegistry map[string]command) (command, bool
 		subcmdName := tokens[i]
 		subcmdField := cmdVal.FieldByNameFunc(func(s string) bool { return strings.ToLower(s) == subcmdName })
 		if !subcmdField.IsValid() {
-			return nil, false, fmt.Errorf("unknown subcommand: %s", subcmdName)
+			return nil, false, fmt.Errorf("unknown subcommand or bool option: %s", subcmdName)
 		}
 		if subcmdField.Kind() == reflect.Bool {
 			break
@@ -77,20 +77,20 @@ func parseInput(input string, commandRegistry map[string]command) (command, bool
 				if b, err := strconv.ParseBool(kv[1]); err == nil {
 					field.SetBool(b)
 				} else {
-					return nil, false, fmt.Errorf("invalid value for bool option: %s", kv[1])
+					return nil, false, fmt.Errorf("invalid value for bool option '%s': %s", kv[0], kv[1])
 				}
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if v, err := strconv.Atoi(kv[1]); err == nil {
 				field.SetInt(int64(v))
 			} else {
-				return nil, false, fmt.Errorf("invalid value for int option: %s", kv[1])
+				return nil, false, fmt.Errorf("invalid value for int option '%s': %s", kv[0], kv[1])
 			}
 		case reflect.Float64, reflect.Float32:
 			if v, err := strconv.ParseFloat(kv[1], 64); err == nil {
 				field.SetFloat(v)
 			} else {
-				return nil, false, fmt.Errorf("invalid value for int option: %s", kv[1])
+				return nil, false, fmt.Errorf("invalid value for float option '%s': %s", kv[0], kv[1])
 			}
 		case reflect.String:
 			field.SetString(kv[1])
@@ -100,9 +100,9 @@ func parseInput(input string, commandRegistry map[string]command) (command, bool
 		i++
 	}
 
-	exec, ok := cmdVal.Interface().(command)
+	exec, ok := cmdVal.Interface().(Command)
 	if !ok {
-		return nil, false, fmt.Errorf("command %s does not implement interface", cmdName)
+		return nil, false, fmt.Errorf("command %s does not implement interface Command", cmdName)
 	}
 	return exec, false, nil
 }
