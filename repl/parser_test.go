@@ -24,9 +24,9 @@ func (c subCmd) Help(repl *Repl, out *strings.Builder)    {}
 
 type subSubCmd struct {
 	Arg1 bool
-	Arg2 int
-	Arg3 float64
-	Arg4 string
+	Arg2 int     `default:"5"`
+	Arg3 float64 `default:"3.5"`
+	Arg4 string  `default:"abc"`
 }
 
 func (c subSubCmd) Execute(repl *Repl, out *strings.Builder) {}
@@ -45,6 +45,14 @@ func TestParser(t *testing.T) {
 	assert.NotNil(t, out)
 	assert.False(t, help)
 	assert.Equal(t, "repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:\"test\"}", fmt.Sprintf("%#v", out))
+
+	cmdString = "cmd sub subsub"
+	out, help, err = parseInput(cmdString, allCommands)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, out)
+	assert.False(t, help)
+	assert.Equal(t, "repl.subSubCmd{Arg1:false, Arg2:5, Arg3:3.5, Arg4:\"abc\"}", fmt.Sprintf("%#v", out))
 
 	cmdString = "help cmd sub subsub arg1 arg2=1 arg3=2.0 arg4=test"
 	out, help, err = parseInput(cmdString, allCommands)

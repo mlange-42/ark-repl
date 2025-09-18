@@ -56,6 +56,20 @@ func parseInput(input string, commandRegistry map[string]Command) (Command, bool
 		i++
 	}
 
+	// Fill defaults
+	for i := range cmdVal.NumField() {
+		typeField := cmdVal.Type().Field(i)
+		value, ok := typeField.Tag.Lookup("default")
+		if !ok {
+			continue
+		}
+		field := cmdVal.Field(i)
+
+		if err := setField(field, []string{typeField.Name, value}); err != nil {
+			return nil, false, err
+		}
+	}
+
 	// Parse args
 	for i < len(tokens) {
 		kv := strings.SplitN(tokens[i], "=", 2)
@@ -69,33 +83,8 @@ func parseInput(input string, commandRegistry map[string]Command) (Command, bool
 			return nil, false, fmt.Errorf("invalid option syntax: %s", tokens[i])
 		}
 
-		switch field.Kind() {
-		case reflect.Bool:
-			if len(kv) == 1 {
-				field.SetBool(true)
-			} else {
-				if b, err := strconv.ParseBool(kv[1]); err == nil {
-					field.SetBool(b)
-				} else {
-					return nil, false, fmt.Errorf("invalid value for bool option '%s': %s", kv[0], kv[1])
-				}
-			}
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if v, err := strconv.Atoi(kv[1]); err == nil {
-				field.SetInt(int64(v))
-			} else {
-				return nil, false, fmt.Errorf("invalid value for int option '%s': %s", kv[0], kv[1])
-			}
-		case reflect.Float64, reflect.Float32:
-			if v, err := strconv.ParseFloat(kv[1], 64); err == nil {
-				field.SetFloat(v)
-			} else {
-				return nil, false, fmt.Errorf("invalid value for float option '%s': %s", kv[0], kv[1])
-			}
-		case reflect.String:
-			field.SetString(kv[1])
-		default:
-			return nil, false, fmt.Errorf("unsupported argument type %s", field.Kind().String())
+		if err := setField(field, kv); err != nil {
+			return nil, false, err
 		}
 		i++
 	}
@@ -105,4 +94,36 @@ func parseInput(input string, commandRegistry map[string]Command) (Command, bool
 		return nil, false, fmt.Errorf("command %s does not implement interface Command", cmdName)
 	}
 	return exec, false, nil
+}
+
+func setField(field reflect.Value, kv []string) error {
+	switch field.Kind() {
+	case reflect.Bool:
+		if len(kv) == 1 {
+			field.SetBool(true)
+		} else {
+			if b, err := strconv.ParseBool(kv[1]); err == nil {
+				field.SetBool(b)
+			} else {
+				return fmt.Errorf("invalid value for bool option '%s': %s", kv[0], kv[1])
+			}
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if v, err := strconv.Atoi(kv[1]); err == nil {
+			field.SetInt(int64(v))
+		} else {
+			return fmt.Errorf("invalid value for int option '%s': %s", kv[0], kv[1])
+		}
+	case reflect.Float64, reflect.Float32:
+		if v, err := strconv.ParseFloat(kv[1], 64); err == nil {
+			field.SetFloat(v)
+		} else {
+			return fmt.Errorf("invalid value for float option '%s': %s", kv[0], kv[1])
+		}
+	case reflect.String:
+		field.SetString(kv[1])
+	default:
+		return fmt.Errorf("unsupported argument type %s", field.Kind().String())
+	}
+	return nil
 }

@@ -100,15 +100,11 @@ func (c list) Help(repl *Repl, out *strings.Builder) {
 }
 
 type listEntities struct {
-	N int
+	N int `default:"25"`
 }
 
 func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
-	limit := 25
-	if c.N != 0 {
-		// TODO: default values
-		limit = c.N
-	}
+	limit := c.N
 	filter := ecs.NewUnsafeFilter(repl.World())
 	query := filter.Query()
 	cnt := 0
@@ -129,7 +125,7 @@ func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c listEntities) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Lists entities. Optional argument to limit the number of entities to list. Default 25")
+	fmt.Fprintln(out, "Lists entities. Optional argument `n` limits the number of entities to print. Default 25")
 }
 
 type listResources struct{}
