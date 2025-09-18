@@ -70,14 +70,13 @@ func parseInput(input string, commandRegistry map[string]any) (any, error) {
 					return nil, fmt.Errorf("invalid value for bool option: %s", kv[1])
 				}
 			}
-			field.SetString(kv[1])
-		case reflect.Int | reflect.Int8 | reflect.Int16 | reflect.Int32 | reflect.Int64:
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if v, err := strconv.Atoi(kv[1]); err == nil {
 				field.SetInt(int64(v))
 			} else {
 				return nil, fmt.Errorf("invalid value for int option: %s", kv[1])
 			}
-		case reflect.Float64 | reflect.Float32:
+		case reflect.Float64, reflect.Float32:
 			if v, err := strconv.ParseFloat(kv[1], 64); err == nil {
 				field.SetFloat(v)
 			} else {
@@ -85,6 +84,8 @@ func parseInput(input string, commandRegistry map[string]any) (any, error) {
 			}
 		case reflect.String:
 			field.SetString(kv[1])
+		default:
+			return nil, fmt.Errorf("unsupported argument type %s", field.Kind().String())
 		}
 		i++
 	}
