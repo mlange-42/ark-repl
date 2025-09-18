@@ -78,5 +78,5 @@ func TestParserListEntities(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.False(t, help)
-	assert.Equal(t, "repl.listEntities{N:25, With:[]string{\"Position\", \"Velocity\"}}", fmt.Sprintf("%#v", out))
+	assert.Equal(t, "repl.listEntities{N:25, With:[]string{\"Position\", \"Velocity\"}, Without:[]string(nil), Exclusive:false}", fmt.Sprintf("%#v", out))
 }

@@ -100,9 +100,10 @@ func (c list) Help(repl *Repl, out *strings.Builder) {
 }
 
 type listEntities struct {
-	N       int `default:"25"`
-	With    []string
-	Without []string
+	N         int `default:"25"`
+	With      []string
+	Without   []string
+	Exclusive bool
 }
 
 func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
@@ -120,6 +121,9 @@ func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
 	}
 
 	filter := ecs.NewUnsafeFilter(repl.World(), ids...).Without(without...)
+	if c.Exclusive {
+		filter = filter.Exclusive()
+	}
 	query := filter.Query()
 	cnt := 0
 	total := query.Count()
