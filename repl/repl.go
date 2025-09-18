@@ -170,23 +170,3 @@ func (r *Repl) execCommand(cmd Command, out *strings.Builder) {
 	}
 	<-done
 }
-
-func parse(cmd string) (string, []string) {
-	tokens := strings.Split(cmd, " ")
-	name, args, _ := parseSlice(tokens)
-	return name, args
-}
-
-func parseSlice(tokens []string) (string, []string, bool) {
-	if len(tokens) == 0 {
-		return "", nil, false
-	}
-	cmdName := tokens[0]
-
-	var args []string
-	if len(tokens) > 1 {
-		args = tokens[1:]
-	}
-
-	return cmdName, args, true
-}
