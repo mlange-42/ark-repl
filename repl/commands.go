@@ -100,7 +100,8 @@ func (c list) Help(repl *Repl, out *strings.Builder) {
 }
 
 type listEntities struct {
-	N int `default:"25"`
+	N    int `default:"25"`
+	With []string
 }
 
 func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
