@@ -32,12 +32,12 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 		world:     world,
 		callbacks: callbacks,
 		commands: map[string]Command{
-			"pause":  &pause{},
-			"resume": &resume{},
-			"stop":   &stop{},
-			"help":   &help{},
-			"stats":  &stats{},
-			"list":   &list{},
+			"help":   help{},
+			"pause":  pause{},
+			"resume": resume{},
+			"stop":   stop{},
+			"stats":  stats{},
+			"list":   list{},
 		},
 	}
 	return &repl
@@ -149,41 +149,24 @@ func (r *Repl) handleConnection(conn net.Conn) {
 	}
 }
 
-func (r *Repl) handleCommand(cmd string, out *strings.Builder) {
-	cmdName, args := parse(cmd)
-
-	if command, ok := r.commands[cmdName]; ok {
-		r.execCommand(command, args, out)
-	} else {
-		out.WriteString("Unknown command: " + cmd + "\n")
+func (r *Repl) handleCommand(cmdString string, out *strings.Builder) {
+	cmd, help, err := parseInput(cmdString, r.commands)
+	if err != nil {
+		out.WriteString(err.Error() + "\n")
+		return
 	}
+	if help {
+		cmd.Help(r, out)
+		return
+	}
+	r.execCommand(cmd, out)
 }
 
-func (r *Repl) execCommand(cmd Command, args []string, out *strings.Builder) {
+func (r *Repl) execCommand(cmd Command, out *strings.Builder) {
 	done := make(chan struct{})
 	r.channel <- func(world *ecs.World) {
-		cmd.Execute(r, args, out)
+		cmd.Execute(r, out)
 		close(done)
 	}
 	<-done
-}
-
-func parse(cmd string) (string, []string) {
-	tokens := strings.Split(cmd, " ")
-	name, args, _ := parseSlice(tokens)
-	return name, args
-}
-
-func parseSlice(tokens []string) (string, []string, bool) {
-	if len(tokens) == 0 {
-		return "", nil, false
-	}
-	cmdName := tokens[0]
-
-	var args []string
-	if len(tokens) > 1 {
-		args = tokens[1:]
-	}
-
-	return cmdName, args, true
 }
