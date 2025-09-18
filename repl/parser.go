@@ -108,7 +108,8 @@ func setField(field reflect.Value, kv []string) error {
 				return fmt.Errorf("invalid value for bool option '%s': %s", kv[0], kv[1])
 			}
 		}
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		if v, err := strconv.Atoi(kv[1]); err == nil {
 			field.SetInt(int64(v))
 		} else {
@@ -137,13 +138,14 @@ func setField(field reflect.Value, kv []string) error {
 					return fmt.Errorf("invalid value for []bool option '%s': %s", kv[0], raw)
 				}
 				val = reflect.ValueOf(b)
-			case reflect.Int:
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				i, err := strconv.Atoi(raw)
 				if err != nil {
 					return fmt.Errorf("invalid value for []int option '%s': %s", kv[0], raw)
 				}
 				val = reflect.ValueOf(i)
-			case reflect.Float64:
+			case reflect.Float64, reflect.Float32:
 				f, err := strconv.ParseFloat(raw, 64)
 				if err != nil {
 					return fmt.Errorf("invalid value for []float option '%s': %s", kv[0], raw)
@@ -159,4 +161,73 @@ func setField(field reflect.Value, kv []string) error {
 		return fmt.Errorf("unsupported argument type %s for option '%s'", field.Kind().String(), kv[0])
 	}
 	return nil
+}
+
+func extractHelp(repl *Repl, cmd Command, out *strings.Builder) {
+	commands := []string{}
+	options := []string{}
+
+	cmdVal := reflect.ValueOf(cmd)
+
+	for i := range cmdVal.NumField() {
+		field := cmdVal.Field(i)
+		typeField := cmdVal.Type().Field(i)
+
+		if field.Kind() == reflect.Struct {
+			commands = append(commands, strings.ToLower(typeField.Name))
+			continue
+		}
+
+		var kind string
+		switch field.Kind() {
+		case reflect.Bool, reflect.String:
+			kind = field.Kind().String()
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			kind = "int"
+		case reflect.Float32, reflect.Float64:
+			kind = "float"
+		case reflect.Slice:
+			elemType := field.Type().Elem()
+			switch elemType.Kind() {
+			case reflect.Bool, reflect.String:
+				kind = elemType.Kind().String() + "s"
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				kind = "ints"
+			case reflect.Float32, reflect.Float64:
+				kind = "floats"
+			default:
+				kind = "unknowns"
+			}
+		default:
+			kind = "unknown"
+		}
+
+		help, ok := typeField.Tag.Lookup("help")
+		defaultValue, ok := typeField.Tag.Lookup("default")
+		if ok {
+			defaultValue = "Default: " + defaultValue
+		}
+
+		options = append(options,
+			fmt.Sprintf("%-14s%-7s  %s %s",
+				strings.ToLower(typeField.Name),
+				kind, help, defaultValue,
+			))
+	}
+
+	cmd.Help(repl, out)
+	if len(commands) > 0 {
+		fmt.Fprintln(out, "\nCommands:")
+		for _, c := range commands {
+			fmt.Fprintf(out, "  %s\n", c)
+		}
+	}
+	if len(options) > 0 {
+		fmt.Fprintln(out, "\nOptions:")
+		for _, o := range options {
+			fmt.Fprintf(out, "  %s\n", o)
+		}
+	}
 }
