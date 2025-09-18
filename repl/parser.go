@@ -205,13 +205,16 @@ func extractHelp(repl *Repl, cmd Command, out *strings.Builder) {
 		}
 
 		help, ok := typeField.Tag.Lookup("help")
+		if ok {
+			help = help + " "
+		}
 		defaultValue, ok := typeField.Tag.Lookup("default")
 		if ok {
 			defaultValue = "Default: " + defaultValue
 		}
 
 		options = append(options,
-			fmt.Sprintf("%-14s%-7s  %s %s",
+			fmt.Sprintf("%-14s%-7s  %s%s",
 				strings.ToLower(typeField.Name),
 				kind, help, defaultValue,
 			))

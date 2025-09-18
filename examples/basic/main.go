@@ -44,15 +44,17 @@ func main() {
 		// Execute incoming REPL commands.
 		repl.RunCommands()
 
-		if stop {
+		if stop { // Stopped?
 			break
 		}
-		if pause {
+		if pause { // Paused?
 			time.Sleep(50 * time.Millisecond)
 			continue
 		}
 
 		// Update step
+		ecs.GetResource[examples.Tick](&world).Tick++
+		// Emulate frame time
 		time.Sleep(50 * time.Millisecond)
 	}
 }
