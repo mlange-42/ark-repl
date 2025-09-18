@@ -100,25 +100,40 @@ func (c list) Help(repl *Repl, out *strings.Builder) {
 }
 
 type listEntities struct {
-	N    int `default:"25"`
-	With []string
+	N       int `default:"25"`
+	With    []string
+	Without []string
 }
 
 func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
 	limit := c.N
-	filter := ecs.NewUnsafeFilter(repl.World())
+
+	ids, err := getComponentIDs(repl.world, c.With)
+	if err != nil {
+		fmt.Fprintln(out, err.Error())
+		return
+	}
+	without, err := getComponentIDs(repl.world, c.Without)
+	if err != nil {
+		fmt.Fprintln(out, err.Error())
+		return
+	}
+
+	filter := ecs.NewUnsafeFilter(repl.World(), ids...).Without(without...)
 	query := filter.Query()
 	cnt := 0
 	total := query.Count()
-	for query.Next() {
-		fmt.Fprintln(out, query.Entity())
-		cnt++
-		if cnt >= limit {
-			query.Close()
-			break
+	if limit > 0 {
+		for query.Next() {
+			fmt.Fprintln(out, query.Entity())
+			cnt++
+			if cnt >= limit {
+				query.Close()
+				break
+			}
 		}
 	}
-	if cnt == 0 {
+	if total == 0 {
 		fmt.Fprint(out, "No entities\n")
 	} else if total > cnt {
 		fmt.Fprintf(out, "Skipping %d of %d entities\n", total-cnt, total)
