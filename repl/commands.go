@@ -174,7 +174,7 @@ func (c listComponents) Execute(repl *Repl, out *strings.Builder) {
 	cnt := 0
 	for _, id := range allComp {
 		if info, ok := ecs.ComponentInfo(repl.World(), id); ok {
-			fmt.Fprintf(out, "%d: %s\n", id.Index(), info.Type.Name())
+			fmt.Fprintf(out, "%d: %s\n", id.Index(), info.Type.String())
 			cnt++
 		}
 	}
