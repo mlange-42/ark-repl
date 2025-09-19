@@ -13,7 +13,9 @@ type cmd struct {
 }
 
 func (c cmd) Execute(repl *Repl, out *strings.Builder) {}
-func (c cmd) Help(repl *Repl, out *strings.Builder)    {}
+func (c cmd) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprint(out, "Help text.")
+}
 
 type subCmd struct {
 	SubSub subSubCmd
@@ -23,7 +25,7 @@ func (c subCmd) Execute(repl *Repl, out *strings.Builder) {}
 func (c subCmd) Help(repl *Repl, out *strings.Builder)    {}
 
 type subSubCmd struct {
-	Arg1 bool
+	Arg1 bool    `help:"help text"`
 	Arg2 int     `default:"5"`
 	Arg3 float64 `default:"3.5"`
 	Arg4 string  `default:"abc"`
@@ -79,4 +81,25 @@ func TestParserListEntities(t *testing.T) {
 	assert.NotNil(t, out)
 	assert.False(t, help)
 	assert.Equal(t, "repl.listEntities{N:25, With:[]string{\"Position\", \"Velocity\"}, Without:[]string(nil), Exclusive:false}", fmt.Sprintf("%#v", out))
+}
+
+func TestExtractHelp(t *testing.T) {
+	out := strings.Builder{}
+	repl := NewRepl(nil, Callbacks{})
+
+	extractHelp(repl, cmd{}, &out)
+	assert.Equal(t, `Help text.
+Commands:
+  sub
+`, out.String())
+
+	out = strings.Builder{}
+	extractHelp(repl, subSubCmd{}, &out)
+	assert.Equal(t, `
+Options:
+  arg1          bool     help text 
+  arg2          int      Default: 5
+  arg3          float    Default: 3.5
+  arg4          string   Default: abc
+`, out.String())
 }

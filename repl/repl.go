@@ -3,6 +3,7 @@ package repl
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -79,38 +80,33 @@ func (r *Repl) RunCommands() {
 
 // Start the REPL.
 func (r *Repl) Start() {
-	go r.startLocal()
-}
+	go func() {
+		scanner := bufio.NewScanner(os.Stdin)
+		fmt.Println("Ark REPL started. Type 'help' for commands.")
 
-func (r *Repl) startLocal() {
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Ark REPL started. Type 'help' for commands.")
+		for {
+			fmt.Print("> ")
+			if !scanner.Scan() {
+				break
+			}
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" {
+				continue
+			}
 
-	for {
-		fmt.Print("> ")
-		if !scanner.Scan() {
-			break
+			var out strings.Builder
+			r.handleCommand(line, &out)
+			fmt.Print(out.String())
 		}
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-
-		var out strings.Builder
-		r.handleCommand(line, &out)
-		fmt.Print(out.String())
-	}
+	}()
 }
 
 // StartServer starts a server for the REPL.
 func (r *Repl) StartServer(addr string) {
-	go r.startServer(addr)
-}
-
-func (r *Repl) startServer(addr string) error {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("failed to start REPL server: %w", err)
+		log.Fatalf("failed to start REPL server: %s", err)
+		return
 	}
 	fmt.Println("REPL server listening on", addr)
 
@@ -124,8 +120,6 @@ func (r *Repl) startServer(addr string) error {
 			go r.handleConnection(conn)
 		}
 	}()
-
-	return nil
 }
 
 func (r *Repl) handleConnection(conn net.Conn) {
