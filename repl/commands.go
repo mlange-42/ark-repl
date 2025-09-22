@@ -2,6 +2,7 @@ package repl
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -88,42 +89,44 @@ func (c stats) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Prints world statistics.")
 }
 
-type list struct {
-	Entities   listEntities
-	Resources  listResources
-	Components listComponents
-}
-
-func (c list) Execute(repl *Repl, out *strings.Builder) {
-	c.Help(repl, out)
-}
-
-func (c list) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Lists various things.")
-}
-
-type listEntities struct {
+type query struct {
 	N         int      `default:"25" help:"Maximum number of entities to print."`
-	With      []string `help:"Only entities with these components."`
+	Comps     []string `help:"Components of the query."`
+	With      []string `help:"Additional components to filter for."`
 	Without   []string `help:"Only entities without these components."`
 	Exclusive bool     `help:"Only entities with exactly the components in 'with'."`
 }
 
-func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
+func (c query) Execute(repl *Repl, out *strings.Builder) {
 	limit := c.N
 
-	ids, err := getComponentIDs(repl.world, c.With)
+	comps, err := getComponentIDs(repl.world, c.Comps)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
 	}
+	compTypes := make([]reflect.Type, 0, len(comps))
+	for _, id := range comps {
+		info, _ := ecs.ComponentInfo(repl.world, id)
+		compTypes = append(compTypes, info.Type)
+	}
+
+	with, err := getComponentIDs(repl.world, c.With)
+	if err != nil {
+		fmt.Fprintln(out, err.Error())
+		return
+	}
+	allComps := make([]ecs.ID, 0, len(comps)+len(with))
+	allComps = append(allComps, comps...)
+	allComps = append(allComps, with...)
+
 	without, err := getComponentIDs(repl.world, c.Without)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
 	}
 
-	filter := ecs.NewUnsafeFilter(repl.World(), ids...).Without(without...)
+	filter := ecs.NewUnsafeFilter(repl.World(), allComps...).Without(without...)
 	if c.Exclusive {
 		filter = filter.Exclusive()
 	}
@@ -131,8 +134,15 @@ func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
 	cnt := 0
 	total := query.Count()
 	if limit > 0 {
+		compStrings := make([]string, len(comps))
 		for query.Next() {
-			fmt.Fprintln(out, query.Entity())
+			fmt.Fprintf(out, "%v: ", query.Entity())
+			for i, id := range comps {
+				ptr := query.Get(id)
+				val := reflect.NewAt(compTypes[i], ptr).Elem()
+				compStrings[i] = fmt.Sprintf("%s%+v", compTypes[i].Name(), val.Interface())
+			}
+			fmt.Fprintln(out, strings.Join(compStrings, " "))
 			cnt++
 			if cnt >= limit {
 				query.Close()
@@ -147,8 +157,21 @@ func (c listEntities) Execute(repl *Repl, out *strings.Builder) {
 	}
 }
 
-func (c listEntities) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Lists entities.")
+func (c query) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Query entities")
+}
+
+type list struct {
+	Resources  listResources
+	Components listComponents
+}
+
+func (c list) Execute(repl *Repl, out *strings.Builder) {
+	c.Help(repl, out)
+}
+
+func (c list) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Lists various things.")
 }
 
 type listResources struct{}

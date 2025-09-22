@@ -22,6 +22,9 @@ func parseInput(input string, commandRegistry map[string]Command) (Command, bool
 	cmdVal := reflect.New(reflect.TypeOf(cmdStruct)).Elem()
 
 	if len(tokens) == 1 {
+		if err := setDefaults(cmdVal); err != nil {
+			return nil, false, err
+		}
 		cmd, ok := cmdVal.Interface().(Command)
 		if !ok {
 			return nil, false, fmt.Errorf("command %s does not implement interface Command", cmdName)
@@ -57,17 +60,8 @@ func parseInput(input string, commandRegistry map[string]Command) (Command, bool
 	}
 
 	// Fill defaults
-	for i := range cmdVal.NumField() {
-		typeField := cmdVal.Type().Field(i)
-		value, ok := typeField.Tag.Lookup("default")
-		if !ok {
-			continue
-		}
-		field := cmdVal.Field(i)
-
-		if err := setField(field, []string{typeField.Name, value}); err != nil {
-			return nil, false, err
-		}
+	if err := setDefaults(cmdVal); err != nil {
+		return nil, false, err
 	}
 
 	// Parse args
@@ -94,6 +88,22 @@ func parseInput(input string, commandRegistry map[string]Command) (Command, bool
 		return nil, false, fmt.Errorf("command %s does not implement interface Command", cmdName)
 	}
 	return exec, false, nil
+}
+
+func setDefaults(cmdVal reflect.Value) error {
+	for i := range cmdVal.NumField() {
+		typeField := cmdVal.Type().Field(i)
+		value, ok := typeField.Tag.Lookup("default")
+		if !ok {
+			continue
+		}
+		field := cmdVal.Field(i)
+
+		if err := setField(field, []string{typeField.Name, value}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func setField(field reflect.Value, kv []string) error {
