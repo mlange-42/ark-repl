@@ -33,6 +33,7 @@ var defaultCommands = map[string]Command{
 	"stop":   stop{},
 	"stats":  stats{},
 	"list":   list{},
+	"query":  query{},
 }
 
 // NewRepl creates a new [Repl].
