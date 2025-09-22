@@ -46,7 +46,7 @@ func TestParser(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.False(t, help)
-	assert.Equal(t, "repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:\"test\"}", fmt.Sprintf("%#v", out))
+	assert.Equal(t, `repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:"test"}`, fmt.Sprintf("%#v", out))
 
 	cmdString = "cmd sub subsub"
 	out, help, err = parseInput(cmdString, allCommands)
@@ -54,7 +54,7 @@ func TestParser(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.False(t, help)
-	assert.Equal(t, "repl.subSubCmd{Arg1:false, Arg2:5, Arg3:3.5, Arg4:\"abc\"}", fmt.Sprintf("%#v", out))
+	assert.Equal(t, `repl.subSubCmd{Arg1:false, Arg2:5, Arg3:3.5, Arg4:"abc"}`, fmt.Sprintf("%#v", out))
 
 	cmdString = "help cmd sub subsub arg1 arg2=1 arg3=2.0 arg4=test"
 	out, help, err = parseInput(cmdString, allCommands)
@@ -62,7 +62,7 @@ func TestParser(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.True(t, help)
-	assert.Equal(t, "repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:\"test\"}", fmt.Sprintf("%#v", out))
+	assert.Equal(t, `repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:"test"}`, fmt.Sprintf("%#v", out))
 
 	cmdString = "help"
 	out, help, err = parseInput(cmdString, allCommands)
@@ -74,13 +74,13 @@ func TestParser(t *testing.T) {
 }
 
 func TestParserListEntities(t *testing.T) {
-	cmdString := "list entities with=Position,Velocity"
+	cmdString := "query comps=Position with=Velocity"
 	out, help, err := parseInput(cmdString, defaultCommands)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.False(t, help)
-	assert.Equal(t, "repl.listEntities{N:25, With:[]string{\"Position\", \"Velocity\"}, Without:[]string(nil), Exclusive:false}", fmt.Sprintf("%#v", out))
+	assert.Equal(t, `repl.query{N:25, Comps:[]string{"Position"}, With:[]string{"Velocity"}, Without:[]string(nil), Exclusive:false}`, fmt.Sprintf("%#v", out))
 }
 
 func TestExtractHelp(t *testing.T) {
