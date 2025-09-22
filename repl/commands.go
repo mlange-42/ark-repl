@@ -212,3 +212,11 @@ func (c listComponents) Execute(repl *Repl, out *strings.Builder) {
 func (c listComponents) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Lists component types.")
 }
+
+type runTui struct{}
+
+func (c runTui) Execute(repl *Repl, out *strings.Builder) {}
+
+func (c runTui) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Starts the terminal dashboard.")
+}

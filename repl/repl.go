@@ -6,8 +6,10 @@ import (
 	"log"
 	"net"
 	"os"
+	"reflect"
 	"strings"
 
+	"github.com/mlange-42/ark-repl/tui"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -34,6 +36,7 @@ var defaultCommands = map[string]Command{
 	"stats":  stats{},
 	"list":   list{},
 	"query":  query{},
+	"tui":    runTui{},
 }
 
 // NewRepl creates a new [Repl].
@@ -159,6 +162,10 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) {
 	if help {
 		extractHelp(r, cmd, out)
 		return
+	}
+	if reflect.TypeOf(cmd) == reflect.TypeFor[runTui]() {
+		tui.Run()
+		r.execCommand(cmd, out)
 	}
 	r.execCommand(cmd, out)
 }
