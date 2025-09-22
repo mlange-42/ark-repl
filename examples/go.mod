@@ -1,12 +1,14 @@
 module github.com/mlange-42/ark-repl/examples
 
-go 1.24.0
+go 1.25.0
 
 require (
-	github.com/mlange-42/ark v0.5.2
+	github.com/mlange-42/ark v0.5.3-0.20250919175834-2f3cdb8eb867
 	github.com/mlange-42/ark-repl v0.0.0
 	github.com/mlange-42/ark-tools v0.1.5
 )
+
+replace github.com/mlange-42/ark-repl => ../
 
 require (
 	github.com/gdamore/encoding v1.0.0 // indirect
@@ -20,5 +22,3 @@ require (
 	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
-
-replace github.com/mlange-42/ark-repl => ../

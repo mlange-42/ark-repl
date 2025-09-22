@@ -3,7 +3,7 @@ module github.com/mlange-42/ark-repl
 go 1.24.0
 
 require (
-	github.com/mlange-42/ark v0.5.2
+	github.com/mlange-42/ark v0.5.3-0.20250919175834-2f3cdb8eb867
 	github.com/mum4k/termdash v0.20.0
 	github.com/stretchr/testify v1.11.1
 )

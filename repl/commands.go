@@ -1,6 +1,7 @@
 package repl
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"slices"
@@ -220,3 +221,19 @@ func (c runTui) Execute(repl *Repl, out *strings.Builder) {}
 func (c runTui) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Starts the terminal dashboard.")
 }
+
+type getStats struct{}
+
+func (c getStats) Execute(repl *Repl, out *strings.Builder) {
+	stats := repl.world.Stats()
+	enc, err := json.Marshal(&stats)
+	if err != nil {
+		panic(err)
+	}
+	_, err = out.Write(enc)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (c getStats) Help(repl *Repl, out *strings.Builder) {}

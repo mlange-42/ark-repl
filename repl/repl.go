@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mlange-42/ark-repl/tui"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -164,7 +163,7 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) {
 		return
 	}
 	if reflect.TypeOf(cmd) == reflect.TypeFor[runTui]() {
-		tui.Run()
+		_ = newMonitor(r)
 		r.execCommand(cmd, out)
 	}
 	r.execCommand(cmd, out)
