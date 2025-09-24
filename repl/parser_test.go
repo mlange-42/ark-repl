@@ -80,7 +80,7 @@ func TestParserListEntities(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.False(t, help)
-	assert.Equal(t, `repl.query{N:25, Comps:[]string{"Position"}, With:[]string{"Velocity"}, Without:[]string(nil), Exclusive:false}`, fmt.Sprintf("%#v", out))
+	assert.Equal(t, `repl.query{N:25, Page:0, Comps:[]string{"Position"}, With:[]string{"Velocity"}, Without:[]string(nil), Exclusive:false, Full:false}`, fmt.Sprintf("%#v", out))
 }
 
 func TestExtractHelp(t *testing.T) {
