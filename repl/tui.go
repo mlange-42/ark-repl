@@ -18,6 +18,7 @@ import (
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/sparkline"
+	"github.com/mum4k/termdash/widgets/text"
 )
 
 // redrawInterval is how often termdash redraws the screen.
@@ -84,7 +85,7 @@ func newMonitor(repl *Repl) *monitor {
 		panic(err)
 	}
 
-	gridOpts, err := gridLayout(w)
+	gridOpts, err := layout(w)
 	if err != nil {
 		panic(err)
 	}
@@ -99,11 +100,18 @@ func newMonitor(repl *Repl) *monitor {
 		cont:    c,
 	}
 
-	go periodic(ctx, 500*time.Millisecond, monitor.update)
+	go periodic(ctx, 1000*time.Millisecond, monitor.update)
 
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == keyboard.KeyEsc || k.Key == keyboard.KeyCtrlC {
 			cancel()
+		}
+		out := strings.Builder{}
+		switch k.Key {
+		case 'p':
+			repl.execCommand(pause{}, &out)
+		case 'r':
+			repl.execCommand(resume{}, &out)
 		}
 	}
 	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(redrawInterval)); err != nil {
@@ -176,43 +184,42 @@ func newWidgets(ctx context.Context, t terminalapi.Terminal, c *container.Contai
 	}, nil
 }
 
-// gridLayout prepares container options that represent the desired screen layout.
-// This function demonstrates the use of the grid builder.
-// gridLayout() and contLayout() demonstrate the two available layout APIs and
-// both produce equivalent layouts for layoutType layoutAll.
-func gridLayout(w *widgets) ([]container.Option, error) {
+func layout(w *widgets) ([]container.Option, error) {
 	builder := grid.New()
-	builder.Add(
-		grid.ColWidthPerc(25,
-			grid.RowHeightPerc(25,
-				grid.Widget(w.spFPS,
-					container.ID(spFpsID),
-					container.Border(linestyle.Light),
-					container.BorderTitle("FPS 0"),
-				),
-			),
-			grid.RowHeightPerc(25,
-				grid.Widget(w.spMemory,
-					container.ID(spMemoryID),
-					container.Border(linestyle.Light),
-					container.BorderTitle("Memory 0kB"),
-				),
-			),
-			grid.RowHeightPerc(25,
-				grid.Widget(w.spReserved,
-					container.ID(spReservedID),
-					container.Border(linestyle.Light),
-					container.BorderTitle("Reserved 0kB"),
-				),
-			),
-			grid.RowHeightPerc(25,
-				grid.Widget(w.spEntities,
-					container.ID(spEntitiesID),
-					container.Border(linestyle.Light),
-					container.BorderTitle("Entities 0"),
-				),
+
+	leftColumn := grid.ColWidthPerc(25,
+		grid.RowHeightPerc(25,
+			grid.Widget(w.spFPS,
+				container.ID(spFpsID),
+				container.Border(linestyle.Light),
+				container.BorderTitle("FPS 0"),
 			),
 		),
+		grid.RowHeightPerc(25,
+			grid.Widget(w.spMemory,
+				container.ID(spMemoryID),
+				container.Border(linestyle.Light),
+				container.BorderTitle("Memory 0kB"),
+			),
+		),
+		grid.RowHeightPerc(25,
+			grid.Widget(w.spReserved,
+				container.ID(spReservedID),
+				container.Border(linestyle.Light),
+				container.BorderTitle("Reserved 0kB"),
+			),
+		),
+		grid.RowHeightPerc(25,
+			grid.Widget(w.spEntities,
+				container.ID(spEntitiesID),
+				container.Border(linestyle.Light),
+				container.BorderTitle("Entities 0"),
+			),
+		),
+	)
+
+	builder.Add(
+		leftColumn,
 		grid.ColWidthPerc(75),
 	)
 
@@ -220,7 +227,24 @@ func gridLayout(w *widgets) ([]container.Option, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gridOpts, nil
+
+	help, err := text.New()
+	if err != nil {
+		panic(err)
+	}
+	if err := help.Write("Help: [P]ause [R]esume [Esc]ape"); err != nil {
+		panic(err)
+	}
+
+	outer := []container.Option{
+		container.SplitHorizontal(
+			container.Top(gridOpts...),
+			container.Bottom(container.PlaceWidget(help)),
+			container.SplitFixedFromEnd(1),
+		),
+	}
+
+	return outer, nil
 }
 
 // periodic executes the provided closure periodically every interval.
