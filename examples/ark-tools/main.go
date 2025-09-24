@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	app := app.New()
+	app := app.New(32)
 	app.TPS = 10
 	app.FPS = 10
 
@@ -29,10 +29,14 @@ func main() {
 		Stop: func(out *strings.Builder) {
 			ecs.GetResource[resource.Termination](&app.World).Terminate = true
 		},
+		Ticks: func() int {
+			return int(ecs.GetResource[resource.Tick](&app.World).Tick)
+		},
 	}
 
 	repl := repl.NewRepl(&app.World, callbacks)
 
+	app.AddSystem(&UpdateSystem{})
 	app.AddUISystem(&CommandSystem{repl})
 
 	// For control from this terminal:
@@ -61,3 +65,17 @@ func (s *CommandSystem) PostUpdateUI(w *ecs.World) {}
 
 // FinalizeUI the system.
 func (s *CommandSystem) FinalizeUI(w *ecs.World) {}
+
+// UpdateSystem calls [examples.Update] every tick
+type UpdateSystem struct{}
+
+// Initialize the system.
+func (s *UpdateSystem) Initialize(w *ecs.World) {}
+
+// Update the system.
+func (s *UpdateSystem) Update(w *ecs.World) {
+	examples.Update(w)
+}
+
+// Finalize the system.
+func (s *UpdateSystem) Finalize(w *ecs.World) {}

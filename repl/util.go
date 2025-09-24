@@ -28,3 +28,7 @@ func getComponentIDs(world *ecs.World, compNames []string) ([]ecs.ID, error) {
 	}
 	return ids, nil
 }
+
+func formatMemory(bytes int) string {
+	return fmt.Sprintf("%.1fkB", float64(bytes)/1024.0)
+}

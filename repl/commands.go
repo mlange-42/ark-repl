@@ -1,12 +1,14 @@
 package repl
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"slices"
 	"strings"
 
 	"github.com/mlange-42/ark/ecs"
+	arkstats "github.com/mlange-42/ark/ecs/stats"
 )
 
 // Command interface.
@@ -19,19 +21,30 @@ type help struct{}
 
 func (c help) Execute(repl *Repl, out *strings.Builder) {
 	cmds := make([]string, 0, len(repl.commands))
-	for cmd := range repl.commands {
+	help := make(map[string]string, len(repl.commands))
+	for cmd, obj := range repl.commands {
 		cmds = append(cmds, cmd)
+		out := strings.Builder{}
+		obj.Help(repl, &out)
+		parts := strings.SplitN(out.String(), "\n", 2)
+		var helpText string
+		if len(parts) > 0 {
+			helpText = parts[0]
+		}
+		help[cmd] = helpText
 	}
 	slices.Sort(cmds)
 
 	fmt.Fprint(out, "For help on a command, use: help <command>\n\n")
 	fmt.Fprintf(out, "Commands:\n")
 	for _, c := range cmds {
-		fmt.Fprintf(out, "  %s\n", c)
+		fmt.Fprintf(out, "  %-10s %s\n", c, help[c])
 	}
 }
 
-func (c help) Help(repl *Repl, out *strings.Builder) {}
+func (c help) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Show this help.")
+}
 
 type pause struct{}
 
@@ -158,7 +171,26 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 }
 
 func (c query) Help(repl *Repl, out *strings.Builder) {
-	fmt.Fprintln(out, "Query entities")
+	fmt.Fprintln(out, "Query entities.")
+}
+
+type shrink struct {
+}
+
+func (c shrink) Execute(repl *Repl, out *strings.Builder) {
+	oldMem := repl.World().Stats().Memory
+	repl.world.Shrink()
+	newMem := repl.World().Stats().Memory
+
+	if newMem != oldMem {
+		fmt.Fprintf(out, "Shrinked world memory: %s -> %s\n", formatMemory(oldMem), formatMemory(newMem))
+	} else {
+		fmt.Fprintf(out, "Shrink had no effect: %s\n", formatMemory(newMem))
+	}
+}
+
+func (c shrink) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Shrink world memory.")
 }
 
 type list struct {
@@ -212,3 +244,43 @@ func (c listComponents) Execute(repl *Repl, out *strings.Builder) {
 func (c listComponents) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Lists component types.")
 }
+
+type runTui struct{}
+
+func (c runTui) Execute(repl *Repl, out *strings.Builder) {}
+
+func (c runTui) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Starts the monitoring TUI app.")
+}
+
+type tuiStats struct {
+	Ticks int
+	Stats *arkstats.World
+}
+
+type getStats struct{}
+
+func (c getStats) Execute(repl *Repl, out *strings.Builder) {
+	stats := repl.world.Stats()
+
+	ticks := 0
+	if repl.callbacks.Ticks != nil {
+		ticks = repl.callbacks.Ticks()
+	}
+
+	s := tuiStats{
+		Stats: stats,
+		Ticks: ticks,
+	}
+
+	enc, err := json.Marshal(&s)
+	if err != nil {
+		panic(err)
+	}
+	_, err = out.Write(enc)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (c getStats) Help(repl *Repl, out *strings.Builder) {}

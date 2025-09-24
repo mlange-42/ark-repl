@@ -6,16 +6,23 @@ import (
 	"log"
 	"net"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/mlange-42/ark/ecs"
 )
 
 // Callbacks for simulation loop control.
+// Individual callbacks are optional, but required to enable the resp. functionality.
 type Callbacks struct {
-	Pause  func(out *strings.Builder)
+	// Pause the simulation.
+	Pause func(out *strings.Builder)
+	// Resume the simulation.
 	Resume func(out *strings.Builder)
-	Stop   func(out *strings.Builder)
+	// Stop the simulation.
+	Stop func(out *strings.Builder)
+	// Get the current simulation tick. Used to calculate frame rate.
+	Ticks func() int
 }
 
 // Repl is the main entry point.
@@ -27,13 +34,15 @@ type Repl struct {
 }
 
 var defaultCommands = map[string]Command{
-	"help":   help{},
-	"pause":  pause{},
-	"resume": resume{},
-	"stop":   stop{},
-	"stats":  stats{},
-	"list":   list{},
-	"query":  query{},
+	"help":    help{},
+	"pause":   pause{},
+	"resume":  resume{},
+	"stop":    stop{},
+	"stats":   stats{},
+	"list":    list{},
+	"query":   query{},
+	"shrink":  shrink{},
+	"monitor": runTui{},
 }
 
 // NewRepl creates a new [Repl].
@@ -159,6 +168,10 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) {
 	if help {
 		extractHelp(r, cmd, out)
 		return
+	}
+	if reflect.TypeOf(cmd) == reflect.TypeFor[runTui]() {
+		_ = newMonitor(r)
+		r.execCommand(cmd, out)
 	}
 	r.execCommand(cmd, out)
 }
