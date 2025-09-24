@@ -149,6 +149,8 @@ func (m *monitor) update() error {
 	m.lastTime = time.Now()
 	m.lastTicks = s.Ticks
 
+	m.ticks++
+
 	return nil
 }
 
