@@ -29,6 +29,9 @@ func main() {
 		Stop: func(out *strings.Builder) {
 			stop = true
 		},
+		Ticks: func() int {
+			return ecs.GetResource[examples.Tick](&world).Tick
+		},
 	}
 
 	repl := repl.NewRepl(&world, callbacks)

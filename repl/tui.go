@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	arkstats "github.com/mlange-42/ark/ecs/stats"
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
@@ -29,6 +28,7 @@ type widgets struct {
 	spMemory   *sparkline.SparkLine
 	spReserved *sparkline.SparkLine
 	spEntities *sparkline.SparkLine
+	spFPS      *sparkline.SparkLine
 }
 
 // rootID is the ID assigned to the root container.
@@ -36,6 +36,7 @@ const rootID = "root"
 const spMemoryID = "spMemory"
 const spReservedID = "spReserved"
 const spEntitiesID = "spEntities"
+const spFpsID = "spFps"
 
 // Terminal implementations
 const (
@@ -44,9 +45,12 @@ const (
 )
 
 type monitor struct {
-	repl    *Repl
-	widgets *widgets
-	cont    *container.Container
+	repl      *Repl
+	widgets   *widgets
+	cont      *container.Container
+	ticks     int
+	lastTicks int
+	lastTime  time.Time
 }
 
 func newMonitor(repl *Repl) *monitor {
@@ -113,19 +117,27 @@ func (m *monitor) update() error {
 	out := strings.Builder{}
 	m.repl.execCommand(getStats{}, &out)
 
-	s := arkstats.World{}
+	s := tuiStats{}
 	if err := json.Unmarshal([]byte(out.String()), &s); err != nil {
 		return err
 	}
 
-	m.widgets.spMemory.Add([]int{s.MemoryUsed})
-	m.cont.Update(spMemoryID, container.BorderTitle(fmt.Sprintf("Memory %.2fkB", float64(s.MemoryUsed)/1024.0)))
+	m.widgets.spMemory.Add([]int{s.Stats.MemoryUsed})
+	m.cont.Update(spMemoryID, container.BorderTitle(fmt.Sprintf("Memory %.2fkB", float64(s.Stats.MemoryUsed)/1024.0)))
 
-	m.widgets.spReserved.Add([]int{s.Memory})
-	m.cont.Update(spReservedID, container.BorderTitle(fmt.Sprintf("Reserved %.2fkB", float64(s.Memory)/1024.0)))
+	m.widgets.spReserved.Add([]int{s.Stats.Memory})
+	m.cont.Update(spReservedID, container.BorderTitle(fmt.Sprintf("Reserved %.2fkB", float64(s.Stats.Memory)/1024.0)))
 
-	m.widgets.spEntities.Add([]int{s.Entities.Used})
-	m.cont.Update(spEntitiesID, container.BorderTitle(fmt.Sprintf("Entities %d", s.Entities.Used)))
+	m.widgets.spEntities.Add([]int{s.Stats.Entities.Used})
+	m.cont.Update(spEntitiesID, container.BorderTitle(fmt.Sprintf("Entities %d", s.Stats.Entities.Used)))
+
+	timePassed := time.Since(m.lastTime)
+	fps := float64(s.Ticks-m.lastTicks) / timePassed.Seconds()
+	m.widgets.spFPS.Add([]int{int(fps)})
+	m.cont.Update(spFpsID, container.BorderTitle(fmt.Sprintf("FPS %.0f", fps)))
+
+	m.lastTime = time.Now()
+	m.lastTicks = s.Ticks
 
 	return nil
 }
@@ -150,10 +162,17 @@ func newWidgets(ctx context.Context, t terminalapi.Terminal, c *container.Contai
 	if err != nil {
 		return nil, err
 	}
+	spFPS, err := sparkline.New(
+		sparkline.Color(cell.ColorGreen),
+	)
+	if err != nil {
+		return nil, err
+	}
 	return &widgets{
 		spMemory:   spMemory,
 		spReserved: spReserved,
 		spEntities: spEntities,
+		spFPS:      spFPS,
 	}, nil
 }
 
@@ -164,27 +183,37 @@ func newWidgets(ctx context.Context, t terminalapi.Terminal, c *container.Contai
 func gridLayout(w *widgets) ([]container.Option, error) {
 	builder := grid.New()
 	builder.Add(
-		grid.RowHeightPerc(33,
-			grid.Widget(w.spMemory,
-				container.ID(spMemoryID),
-				container.Border(linestyle.Light),
-				container.BorderTitle("Memory 0kB"),
+		grid.ColWidthPerc(25,
+			grid.RowHeightPerc(25,
+				grid.Widget(w.spFPS,
+					container.ID(spFpsID),
+					container.Border(linestyle.Light),
+					container.BorderTitle("FPS 0"),
+				),
+			),
+			grid.RowHeightPerc(25,
+				grid.Widget(w.spMemory,
+					container.ID(spMemoryID),
+					container.Border(linestyle.Light),
+					container.BorderTitle("Memory 0kB"),
+				),
+			),
+			grid.RowHeightPerc(25,
+				grid.Widget(w.spReserved,
+					container.ID(spReservedID),
+					container.Border(linestyle.Light),
+					container.BorderTitle("Reserved 0kB"),
+				),
+			),
+			grid.RowHeightPerc(25,
+				grid.Widget(w.spEntities,
+					container.ID(spEntitiesID),
+					container.Border(linestyle.Light),
+					container.BorderTitle("Entities 0"),
+				),
 			),
 		),
-		grid.RowHeightPerc(33,
-			grid.Widget(w.spReserved,
-				container.ID(spReservedID),
-				container.Border(linestyle.Light),
-				container.BorderTitle("Reserved 0kB"),
-			),
-		),
-		grid.RowHeightPerc(33,
-			grid.Widget(w.spEntities,
-				container.ID(spEntitiesID),
-				container.Border(linestyle.Light),
-				container.BorderTitle("Entities 0"),
-			),
-		),
+		grid.ColWidthPerc(75),
 	)
 
 	gridOpts, err := builder.Build()

@@ -17,6 +17,7 @@ type Callbacks struct {
 	Pause  func(out *strings.Builder)
 	Resume func(out *strings.Builder)
 	Stop   func(out *strings.Builder)
+	Ticks  func() int
 }
 
 // Repl is the main entry point.

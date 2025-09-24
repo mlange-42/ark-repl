@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/mlange-42/ark/ecs"
+	arkstats "github.com/mlange-42/ark/ecs/stats"
 )
 
 // Command interface.
@@ -222,11 +223,27 @@ func (c runTui) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Starts the terminal dashboard.")
 }
 
+type tuiStats struct {
+	Ticks int
+	Stats *arkstats.World
+}
+
 type getStats struct{}
 
 func (c getStats) Execute(repl *Repl, out *strings.Builder) {
 	stats := repl.world.Stats()
-	enc, err := json.Marshal(&stats)
+
+	ticks := 0
+	if repl.callbacks.Ticks != nil {
+		ticks = repl.callbacks.Ticks()
+	}
+
+	s := tuiStats{
+		Stats: stats,
+		Ticks: ticks,
+	}
+
+	enc, err := json.Marshal(&s)
 	if err != nil {
 		panic(err)
 	}

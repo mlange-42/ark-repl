@@ -29,6 +29,9 @@ func main() {
 		Stop: func(out *strings.Builder) {
 			ecs.GetResource[resource.Termination](&app.World).Terminate = true
 		},
+		Ticks: func() int {
+			return int(ecs.GetResource[resource.Tick](&app.World).Tick)
+		},
 	}
 
 	repl := repl.NewRepl(&app.World, callbacks)
