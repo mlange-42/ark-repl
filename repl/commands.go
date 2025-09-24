@@ -104,6 +104,7 @@ func (c stats) Help(repl *Repl, out *strings.Builder) {
 
 type query struct {
 	N         int      `default:"25" help:"Maximum number of entities to print."`
+	Page      int      `help:"Page of entities to show (i'th N)."`
 	Comps     []string `help:"Components of the query."`
 	With      []string `help:"Additional components to filter for."`
 	Without   []string `help:"Only entities without these components."`
@@ -112,8 +113,6 @@ type query struct {
 }
 
 func (c query) Execute(repl *Repl, out *strings.Builder) {
-	limit := c.N
-
 	comps, err := getComponentIDs(repl.world, c.Comps)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
@@ -148,13 +147,20 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 	}
 	query := filter.Query()
 	cnt := 0
+	shown := 0
 	total := query.Count()
 
-	if limit > 0 {
+	if c.N > 0 {
 		compStrings := make([]string, 0, len(comps))
 		show := []ecs.ID{}
+
+		start := c.Page * c.N
+		end := (c.Page + 1) * c.N
 		for query.Next() {
-			fmt.Fprintf(out, "%v: ", query.Entity())
+			if cnt < start {
+				cnt++
+				continue
+			}
 
 			if c.Full {
 				ids := query.IDs()
@@ -169,9 +175,12 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 				val := reflect.NewAt(compTypes[id.Index()], ptr).Elem()
 				compStrings = append(compStrings, fmt.Sprintf("%s%+v", compTypes[id.Index()].Name(), val.Interface()))
 			}
+
+			fmt.Fprintf(out, "%v: ", query.Entity())
 			fmt.Fprintln(out, strings.Join(compStrings, " "))
 			cnt++
-			if cnt >= limit {
+			shown++
+			if cnt >= end {
 				query.Close()
 				break
 			}
@@ -179,11 +188,7 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 			show = show[:0]
 		}
 	}
-	if total == 0 {
-		fmt.Fprint(out, "No entities\n")
-	} else if total > cnt {
-		fmt.Fprintf(out, "Skipping %d of %d entities\n", total-cnt, total)
-	}
+	fmt.Fprintf(out, "Listed %d of %d entities (page %d of %d)\n", shown, total, c.Page, (total+c.N-1)/c.N)
 }
 
 func (c query) Help(repl *Repl, out *strings.Builder) {
