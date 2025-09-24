@@ -173,8 +173,9 @@ func setField(field reflect.Value, kv []string) error {
 	return nil
 }
 
-func extractHelp(repl *Repl, cmd Command, out *strings.Builder) {
+func extractHelp(repl *Repl, cmd Command, out *strings.Builder) error {
 	commands := []string{}
+	cmdHelp := []string{}
 	options := []string{}
 
 	cmdVal := reflect.ValueOf(cmd)
@@ -184,7 +185,20 @@ func extractHelp(repl *Repl, cmd Command, out *strings.Builder) {
 		typeField := cmdVal.Type().Field(i)
 
 		if field.Kind() == reflect.Struct {
-			commands = append(commands, strings.ToLower(typeField.Name))
+			cmdName := strings.ToLower(typeField.Name)
+			commands = append(commands, cmdName)
+			interf, ok := field.Interface().(Command)
+			if !ok {
+				return fmt.Errorf("command %s does not implement interface Command", cmdName)
+			}
+			out := strings.Builder{}
+			interf.Help(repl, &out)
+			parts := strings.SplitN(out.String(), "\n", 2)
+			var helpText string
+			if len(parts) > 0 {
+				helpText = parts[0]
+			}
+			cmdHelp = append(cmdHelp, helpText)
 			continue
 		}
 
@@ -233,8 +247,8 @@ func extractHelp(repl *Repl, cmd Command, out *strings.Builder) {
 	cmd.Help(repl, out)
 	if len(commands) > 0 {
 		fmt.Fprintln(out, "\nCommands:")
-		for _, c := range commands {
-			fmt.Fprintf(out, "  %s\n", c)
+		for i, c := range commands {
+			fmt.Fprintf(out, "  %-12s %s\n", c, cmdHelp[i])
 		}
 	}
 	if len(options) > 0 {
@@ -243,4 +257,6 @@ func extractHelp(repl *Repl, cmd Command, out *strings.Builder) {
 			fmt.Fprintf(out, "  %s\n", o)
 		}
 	}
+
+	return nil
 }

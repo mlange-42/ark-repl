@@ -166,7 +166,9 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) {
 		return
 	}
 	if help {
-		extractHelp(r, cmd, out)
+		if err := extractHelp(r, cmd, out); err != nil {
+			panic(err)
+		}
 		return
 	}
 	if reflect.TypeOf(cmd) == reflect.TypeFor[runTui]() {

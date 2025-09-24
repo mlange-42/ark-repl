@@ -22,7 +22,9 @@ type subCmd struct {
 }
 
 func (c subCmd) Execute(repl *Repl, out *strings.Builder) {}
-func (c subCmd) Help(repl *Repl, out *strings.Builder)    {}
+func (c subCmd) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprint(out, "Help text.")
+}
 
 type subSubCmd struct {
 	Arg1 bool    `help:"help text"`
@@ -32,7 +34,9 @@ type subSubCmd struct {
 }
 
 func (c subSubCmd) Execute(repl *Repl, out *strings.Builder) {}
-func (c subSubCmd) Help(repl *Repl, out *strings.Builder)    {}
+func (c subSubCmd) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprint(out, "Help text.")
+}
 
 func TestParser(t *testing.T) {
 	allCommands := map[string]Command{
@@ -80,7 +84,7 @@ func TestParserListEntities(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.False(t, help)
-	assert.Equal(t, `repl.query{N:25, Comps:[]string{"Position"}, With:[]string{"Velocity"}, Without:[]string(nil), Exclusive:false}`, fmt.Sprintf("%#v", out))
+	assert.Equal(t, `repl.query{N:25, Page:0, Comps:[]string{"Position"}, With:[]string{"Velocity"}, Without:[]string(nil), Exclusive:false, Full:false}`, fmt.Sprintf("%#v", out))
 }
 
 func TestExtractHelp(t *testing.T) {
@@ -90,12 +94,12 @@ func TestExtractHelp(t *testing.T) {
 	extractHelp(repl, cmd{}, &out)
 	assert.Equal(t, `Help text.
 Commands:
-  sub
+  sub          Help text.
 `, out.String())
 
 	out = strings.Builder{}
 	extractHelp(repl, subSubCmd{}, &out)
-	assert.Equal(t, `
+	assert.Equal(t, `Help text.
 Options:
   arg1          bool     help text 
   arg2          int      Default: 5

@@ -133,10 +133,10 @@ func (m *monitor) update() error {
 	}
 
 	m.widgets.spMemory.Add([]int{s.Stats.MemoryUsed})
-	m.cont.Update(spMemoryID, container.BorderTitle(fmt.Sprintf("Memory %.2fkB", float64(s.Stats.MemoryUsed)/1024.0)))
+	m.cont.Update(spMemoryID, container.BorderTitle(fmt.Sprintf("Memory %.1fkB", float64(s.Stats.MemoryUsed)/1024.0)))
 
 	m.widgets.spReserved.Add([]int{s.Stats.Memory})
-	m.cont.Update(spReservedID, container.BorderTitle(fmt.Sprintf("Reserved %.2fkB", float64(s.Stats.Memory)/1024.0)))
+	m.cont.Update(spReservedID, container.BorderTitle(fmt.Sprintf("Reserved %.1fkB", float64(s.Stats.Memory)/1024.0)))
 
 	m.widgets.spEntities.Add([]int{s.Stats.Entities.Used})
 	m.cont.Update(spEntitiesID, container.BorderTitle(fmt.Sprintf("Entities %d", s.Stats.Entities.Used)))

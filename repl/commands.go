@@ -38,7 +38,7 @@ func (c help) Execute(repl *Repl, out *strings.Builder) {
 	fmt.Fprint(out, "For help on a command, use: help <command>\n\n")
 	fmt.Fprintf(out, "Commands:\n")
 	for _, c := range cmds {
-		fmt.Fprintf(out, "  %-10s %s\n", c, help[c])
+		fmt.Fprintf(out, "  %-12s %s\n", c, help[c])
 	}
 }
 
@@ -104,22 +104,24 @@ func (c stats) Help(repl *Repl, out *strings.Builder) {
 
 type query struct {
 	N         int      `default:"25" help:"Maximum number of entities to print."`
+	Page      int      `help:"Page of entities to show (i'th N)."`
 	Comps     []string `help:"Components of the query."`
 	With      []string `help:"Additional components to filter for."`
 	Without   []string `help:"Only entities without these components."`
 	Exclusive bool     `help:"Only entities with exactly the components in 'with'."`
+	Full      bool     `help:"Show all components, not only those queried."`
 }
 
 func (c query) Execute(repl *Repl, out *strings.Builder) {
-	limit := c.N
-
 	comps, err := getComponentIDs(repl.world, c.Comps)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
 	}
-	compTypes := make([]reflect.Type, 0, len(comps))
-	for _, id := range comps {
+
+	allIDs := ecs.ComponentIDs(repl.world)
+	compTypes := make([]reflect.Type, 0, len(allIDs))
+	for _, id := range allIDs {
 		info, _ := ecs.ComponentInfo(repl.world, id)
 		compTypes = append(compTypes, info.Type)
 	}
@@ -145,29 +147,48 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 	}
 	query := filter.Query()
 	cnt := 0
+	shown := 0
 	total := query.Count()
-	if limit > 0 {
-		compStrings := make([]string, len(comps))
+
+	if c.N > 0 {
+		compStrings := make([]string, 0, len(comps))
+		show := []ecs.ID{}
+
+		start := c.Page * c.N
+		end := (c.Page + 1) * c.N
 		for query.Next() {
-			fmt.Fprintf(out, "%v: ", query.Entity())
-			for i, id := range comps {
-				ptr := query.Get(id)
-				val := reflect.NewAt(compTypes[i], ptr).Elem()
-				compStrings[i] = fmt.Sprintf("%s%+v", compTypes[i].Name(), val.Interface())
+			if cnt < start {
+				cnt++
+				continue
 			}
+
+			if c.Full {
+				ids := query.IDs()
+				for i := range ids.Len() {
+					show = append(show, ids.Get(i))
+				}
+			} else {
+				show = append(show, comps...)
+			}
+			for _, id := range show {
+				ptr := query.Get(id)
+				val := reflect.NewAt(compTypes[id.Index()], ptr).Elem()
+				compStrings = append(compStrings, fmt.Sprintf("%s%+v", compTypes[id.Index()].Name(), val.Interface()))
+			}
+
+			fmt.Fprintf(out, "%v: ", query.Entity())
 			fmt.Fprintln(out, strings.Join(compStrings, " "))
 			cnt++
-			if cnt >= limit {
+			shown++
+			if cnt >= end {
 				query.Close()
 				break
 			}
+			compStrings = compStrings[:0]
+			show = show[:0]
 		}
 	}
-	if total == 0 {
-		fmt.Fprint(out, "No entities\n")
-	} else if total > cnt {
-		fmt.Fprintf(out, "Skipping %d of %d entities\n", total-cnt, total)
-	}
+	fmt.Fprintf(out, "Listed %d of %d entities (page %d of %d)\n", shown, total, c.Page, (total+c.N-1)/c.N)
 }
 
 func (c query) Help(repl *Repl, out *strings.Builder) {
