@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	world := ecs.NewWorld()
+	world := ecs.NewWorld(32)
 
 	// Populate the world so there is something to see.
 	examples.Populate(&world)
 
-	pause := false
+	pause := true
 	stop := false
 
 	// Callbacks for loop control.
@@ -56,6 +56,7 @@ func main() {
 		}
 
 		// Update step
+		examples.Update(&world)
 		ecs.GetResource[examples.Tick](&world).Tick++
 		// Emulate frame time
 		time.Sleep(50 * time.Millisecond)

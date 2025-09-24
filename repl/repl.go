@@ -13,11 +13,16 @@ import (
 )
 
 // Callbacks for simulation loop control.
+// Individual callbacks are optional, but required to enable the resp. functionality.
 type Callbacks struct {
-	Pause  func(out *strings.Builder)
+	// Pause the simulation.
+	Pause func(out *strings.Builder)
+	// Resume the simulation.
 	Resume func(out *strings.Builder)
-	Stop   func(out *strings.Builder)
-	Ticks  func() int
+	// Stop the simulation.
+	Stop func(out *strings.Builder)
+	// Get the current simulation tick. Used to calculate frame rate.
+	Ticks func() int
 }
 
 // Repl is the main entry point.
@@ -36,6 +41,7 @@ var defaultCommands = map[string]Command{
 	"stats":   stats{},
 	"list":    list{},
 	"query":   query{},
+	"shrink":  shrink{},
 	"monitor": runTui{},
 }
 
