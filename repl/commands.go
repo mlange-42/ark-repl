@@ -38,7 +38,7 @@ func (c help) Execute(repl *Repl, out *strings.Builder) {
 	fmt.Fprint(out, "For help on a command, use: help <command>\n\n")
 	fmt.Fprintf(out, "Commands:\n")
 	for _, c := range cmds {
-		fmt.Fprintf(out, "  %-10s %s\n", c, help[c])
+		fmt.Fprintf(out, "  %-12s %s\n", c, help[c])
 	}
 }
 
@@ -108,6 +108,7 @@ type query struct {
 	With      []string `help:"Additional components to filter for."`
 	Without   []string `help:"Only entities without these components."`
 	Exclusive bool     `help:"Only entities with exactly the components in 'with'."`
+	Full      bool     `help:"Show all components, not only those queried."`
 }
 
 func (c query) Execute(repl *Repl, out *strings.Builder) {
@@ -118,8 +119,10 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 		fmt.Fprintln(out, err.Error())
 		return
 	}
-	compTypes := make([]reflect.Type, 0, len(comps))
-	for _, id := range comps {
+
+	allIDs := ecs.ComponentIDs(repl.world)
+	compTypes := make([]reflect.Type, 0, len(allIDs))
+	for _, id := range allIDs {
 		info, _ := ecs.ComponentInfo(repl.world, id)
 		compTypes = append(compTypes, info.Type)
 	}
@@ -146,14 +149,25 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 	query := filter.Query()
 	cnt := 0
 	total := query.Count()
+
 	if limit > 0 {
-		compStrings := make([]string, len(comps))
+		compStrings := make([]string, 0, len(comps))
+		show := []ecs.ID{}
 		for query.Next() {
 			fmt.Fprintf(out, "%v: ", query.Entity())
-			for i, id := range comps {
+
+			if c.Full {
+				ids := query.IDs()
+				for i := range ids.Len() {
+					show = append(show, ids.Get(i))
+				}
+			} else {
+				show = append(show, comps...)
+			}
+			for _, id := range show {
 				ptr := query.Get(id)
-				val := reflect.NewAt(compTypes[i], ptr).Elem()
-				compStrings[i] = fmt.Sprintf("%s%+v", compTypes[i].Name(), val.Interface())
+				val := reflect.NewAt(compTypes[id.Index()], ptr).Elem()
+				compStrings = append(compStrings, fmt.Sprintf("%s%+v", compTypes[id.Index()].Name(), val.Interface()))
 			}
 			fmt.Fprintln(out, strings.Join(compStrings, " "))
 			cnt++
@@ -161,6 +175,8 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 				query.Close()
 				break
 			}
+			compStrings = compStrings[:0]
+			show = show[:0]
 		}
 	}
 	if total == 0 {
