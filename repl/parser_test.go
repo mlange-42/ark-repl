@@ -22,7 +22,9 @@ type subCmd struct {
 }
 
 func (c subCmd) Execute(repl *Repl, out *strings.Builder) {}
-func (c subCmd) Help(repl *Repl, out *strings.Builder)    {}
+func (c subCmd) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprint(out, "Help text.")
+}
 
 type subSubCmd struct {
 	Arg1 bool    `help:"help text"`
@@ -32,7 +34,9 @@ type subSubCmd struct {
 }
 
 func (c subSubCmd) Execute(repl *Repl, out *strings.Builder) {}
-func (c subSubCmd) Help(repl *Repl, out *strings.Builder)    {}
+func (c subSubCmd) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprint(out, "Help text.")
+}
 
 func TestParser(t *testing.T) {
 	allCommands := map[string]Command{
@@ -90,12 +94,12 @@ func TestExtractHelp(t *testing.T) {
 	extractHelp(repl, cmd{}, &out)
 	assert.Equal(t, `Help text.
 Commands:
-  sub
+  sub          Help text.
 `, out.String())
 
 	out = strings.Builder{}
 	extractHelp(repl, subSubCmd{}, &out)
-	assert.Equal(t, `
+	assert.Equal(t, `Help text.
 Options:
   arg1          bool     help text 
   arg2          int      Default: 5
