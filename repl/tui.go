@@ -112,6 +112,8 @@ func newMonitor(repl *Repl) *monitor {
 			repl.execCommand(pause{}, &out)
 		case 'r':
 			repl.execCommand(resume{}, &out)
+		case 's':
+			repl.execCommand(shrink{}, &out)
 		}
 	}
 	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(redrawInterval)); err != nil {
@@ -141,7 +143,7 @@ func (m *monitor) update() error {
 
 	timePassed := time.Since(m.lastTime)
 	fps := float64(s.Ticks-m.lastTicks) / timePassed.Seconds()
-	m.widgets.spFPS.Add([]int{int(fps)})
+	m.widgets.spFPS.Add([]int{max(int(fps), 0)})
 	m.cont.Update(spFpsID, container.BorderTitle(fmt.Sprintf("FPS %.0f", fps)))
 
 	m.lastTime = time.Now()
@@ -232,7 +234,7 @@ func layout(w *widgets) ([]container.Option, error) {
 	if err != nil {
 		panic(err)
 	}
-	if err := help.Write("Help: [P]ause [R]esume [Esc]ape"); err != nil {
+	if err := help.Write("Help: [Esc]ape [P]ause [R]esume [S]hrink"); err != nil {
 		panic(err)
 	}
 
