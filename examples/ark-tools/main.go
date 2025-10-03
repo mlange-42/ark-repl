@@ -37,34 +37,16 @@ func main() {
 	repl := repl.NewRepl(&app.World, callbacks)
 
 	app.AddSystem(&UpdateSystem{})
-	app.AddUISystem(&CommandSystem{repl})
+	app.AddUISystem(repl.System())
 
 	// For control from this terminal:
-	//repl.Start()
+	repl.Start()
 
 	// For control from another terminal:
-	repl.StartServer(":9000")
+	//repl.StartServer(":9000")
+
 	app.Run()
 }
-
-// CommandSystem executes incoming REPL commands.
-type CommandSystem struct {
-	Repl *repl.Repl
-}
-
-// InitializeUI the system.
-func (s *CommandSystem) InitializeUI(w *ecs.World) {}
-
-// UpdateUI updates the system.
-func (s *CommandSystem) UpdateUI(w *ecs.World) {
-	s.Repl.RunCommands()
-}
-
-// PostUpdateUI does the final part of updating, e.g. update the GL window.
-func (s *CommandSystem) PostUpdateUI(w *ecs.World) {}
-
-// FinalizeUI the system.
-func (s *CommandSystem) FinalizeUI(w *ecs.World) {}
 
 // UpdateSystem calls [examples.Update] every tick
 type UpdateSystem struct{}

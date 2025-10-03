@@ -45,7 +45,7 @@ func main() {
 	// Update loop.
 	for {
 		// Execute incoming REPL commands.
-		repl.RunCommands()
+		repl.Poll()
 
 		if stop { // Stopped?
 			break
