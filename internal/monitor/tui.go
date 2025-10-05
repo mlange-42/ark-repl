@@ -80,7 +80,7 @@ func New(stats Connection) *Monitor {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	w, err := newWidgets(ctx, t, c)
+	w, err := newWidgets()
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +116,9 @@ func New(stats Connection) *Monitor {
 			cmd = "shrink"
 		}
 		if cmd != "" {
-			stats.Exec(cmd)
+			if err := stats.Exec(cmd); err != nil {
+				panic(err)
+			}
 		}
 	}
 	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(redrawInterval)); err != nil {
@@ -155,7 +157,7 @@ func (m *Monitor) update() error {
 }
 
 // newWidgets creates all widgets used by this demo.
-func newWidgets(ctx context.Context, t terminalapi.Terminal, c *container.Container) (*widgets, error) {
+func newWidgets() (*widgets, error) {
 	spMemory, err := sparkline.New(
 		sparkline.Color(cell.ColorGreen),
 	)

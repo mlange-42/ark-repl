@@ -13,7 +13,7 @@ import (
 // Connection interface.
 type Connection interface {
 	Get() (Stats, error)
-	Exec(string)
+	Exec(string) error
 }
 
 // Stats for the monitor.
@@ -57,20 +57,23 @@ func (s *RemoteConnection) Get() (Stats, error) {
 }
 
 // Exec a command.
-func (s *RemoteConnection) Exec(cmd string) {
+func (s *RemoteConnection) Exec(cmd string) error {
 	serverReader := bufio.NewReader(s.Conn)
-	fmt.Fprintln(s.Conn, cmd)
+	if _, err := fmt.Fprintln(s.Conn, cmd); err != nil {
+		return err
+	}
 
 	// Read response
 	for {
 		line, err := serverReader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Connection closed.")
-			return
+			return err
 		}
 		trimmed := strings.TrimSpace(line)
 		if trimmed == ">" {
 			break // prompt received, ready for next input
 		}
 	}
+	return nil
 }

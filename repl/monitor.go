@@ -22,8 +22,9 @@ func (s *localConnection) Get() (monitor.Stats, error) {
 	return st, nil
 }
 
-func (s *localConnection) Exec(cmd string) {
+func (s *localConnection) Exec(cmd string) error {
 	out := strings.Builder{}
 	command := s.repl.commands[cmd]
 	s.repl.execCommand(command, &out)
+	return nil
 }
