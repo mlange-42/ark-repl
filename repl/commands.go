@@ -313,10 +313,10 @@ func (c getStats) Execute(repl *Repl, out *strings.Builder) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = out.Write(enc)
-	if err != nil {
-		panic(err)
-	}
+	out.Write(enc)
+	out.WriteRune('\n')
 }
 
-func (c getStats) Help(repl *Repl, out *strings.Builder) {}
+func (c getStats) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Prints world statistics in JSON format.")
+}

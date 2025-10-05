@@ -38,16 +38,17 @@ type Repl struct {
 }
 
 var defaultCommands = map[string]Command{
-	"help":    help{},
-	"pause":   pause{},
-	"resume":  resume{},
-	"stop":    stop{},
-	"exit":    exit{},
-	"stats":   stats{},
-	"list":    list{},
-	"query":   query{},
-	"shrink":  shrink{},
-	"monitor": runTui{},
+	"help":       help{},
+	"pause":      pause{},
+	"resume":     resume{},
+	"stop":       stop{},
+	"exit":       exit{},
+	"stats":      stats{},
+	"stats-json": getStats{},
+	"list":       list{},
+	"query":      query{},
+	"shrink":     shrink{},
+	"monitor":    runTui{},
 }
 
 // NewRepl creates a new [Repl].
