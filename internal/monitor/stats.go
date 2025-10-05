@@ -10,21 +10,25 @@ import (
 	arkstats "github.com/mlange-42/ark/ecs/stats"
 )
 
-type StatsGetter interface {
+// Connection interface.
+type Connection interface {
 	Get() (Stats, error)
-	Exec(any)
+	Exec(string)
 }
 
+// Stats for the monitor.
 type Stats struct {
 	Ticks int
 	Stats *arkstats.World
 }
 
-type RemoteStats struct {
+// RemoteConnection implements Connection.
+type RemoteConnection struct {
 	Conn net.Conn
 }
 
-func (s *RemoteStats) Get() (Stats, error) {
+// Get stats.
+func (s *RemoteConnection) Get() (Stats, error) {
 	out := strings.Builder{}
 
 	serverReader := bufio.NewReader(s.Conn)
@@ -52,8 +56,21 @@ func (s *RemoteStats) Get() (Stats, error) {
 	return st, nil
 }
 
-func (s *RemoteStats) Exec(cmd any) {
-	if _, err := fmt.Fprintln(s.Conn, cmd.(string)); err != nil {
-		fmt.Println("Connection closed.")
+// Exec a command.
+func (s *RemoteConnection) Exec(cmd string) {
+	serverReader := bufio.NewReader(s.Conn)
+	fmt.Fprintln(s.Conn, cmd)
+
+	// Read response
+	for {
+		line, err := serverReader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Connection closed.")
+			return
+		}
+		trimmed := strings.TrimSpace(line)
+		if trimmed == ">" {
+			break // prompt received, ready for next input
+		}
 	}
 }

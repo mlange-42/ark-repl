@@ -7,11 +7,11 @@ import (
 	"github.com/mlange-42/ark-repl/internal/monitor"
 )
 
-type localStats struct {
+type localConnection struct {
 	repl *Repl
 }
 
-func (s *localStats) Get() (monitor.Stats, error) {
+func (s *localConnection) Get() (monitor.Stats, error) {
 	out := strings.Builder{}
 	s.repl.execCommand(getStats{}, &out)
 
@@ -22,7 +22,8 @@ func (s *localStats) Get() (monitor.Stats, error) {
 	return st, nil
 }
 
-func (s *localStats) Exec(cmd any) {
+func (s *localConnection) Exec(cmd string) {
 	out := strings.Builder{}
-	s.repl.execCommand(cmd.(Command), &out)
+	command := s.repl.commands[cmd]
+	s.repl.execCommand(command, &out)
 }

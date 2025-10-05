@@ -43,8 +43,9 @@ const (
 	tcellTerminal   = "tcell"
 )
 
+// Monitor TUI.
 type Monitor struct {
-	stats     StatsGetter
+	stats     Connection
 	widgets   *widgets
 	cont      *container.Container
 	ticks     int
@@ -52,7 +53,8 @@ type Monitor struct {
 	lastTime  time.Time
 }
 
-func New(stats StatsGetter) *Monitor {
+// New monitor TUI.
+func New(stats Connection) *Monitor {
 	terminal := tcellTerminal
 
 	var t terminalapi.Terminal

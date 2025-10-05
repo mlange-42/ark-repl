@@ -45,7 +45,7 @@ func main() {
 		input := clientReader.Text()
 
 		if input == "monitor" {
-			_ = monitor.New(&monitor.RemoteStats{Conn: conn})
+			_ = monitor.New(&monitor.RemoteConnection{Conn: conn})
 			continue
 		}
 
