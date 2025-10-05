@@ -2,11 +2,11 @@ package monitor
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
 
+	"github.com/goccy/go-json"
 	arkstats "github.com/mlange-42/ark/ecs/stats"
 )
 
