@@ -31,6 +31,7 @@ type Repl struct {
 	world     *ecs.World
 	callbacks Callbacks
 	commands  map[string]Command
+	system    System
 }
 
 var defaultCommands = map[string]Command{
@@ -57,6 +58,7 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 		callbacks: callbacks,
 		commands:  commands,
 	}
+	repl.system = System{repl: &repl}
 	return &repl
 }
 
@@ -74,18 +76,6 @@ func (r *Repl) AddCommand(name string, cmd Command) error {
 	}
 	r.commands[name] = cmd
 	return nil
-}
-
-// RunCommands runs all commands.
-func (r *Repl) RunCommands() {
-	for {
-		select {
-		case cmd := <-r.channel:
-			cmd(r.world)
-		default:
-			return
-		}
-	}
 }
 
 // Start the REPL.
@@ -130,6 +120,37 @@ func (r *Repl) StartServer(addr string) {
 			go r.handleConnection(conn)
 		}
 	}()
+}
+
+// Poll runs all commands.
+func (r *Repl) Poll() {
+	for {
+		select {
+		case cmd := <-r.channel:
+			cmd(r.world)
+		default:
+			return
+		}
+	}
+}
+
+// System returns a UI system for the usage in applications using [ark-tools].
+//
+// Usage:
+//
+//	app := app.New()
+//	callbacks := repl.Callbacks{
+//	    // define callbacks...
+//	}
+//	repl := repl.NewRepl(&app.World, callbacks)
+//
+//	// Set up other systems...
+//
+//	app.AddUISystem(repl.System())
+//
+// [ark-tools]: https://github.com/mlange-42/ark-tools/
+func (r *Repl) System() *System {
+	return &r.system
 }
 
 func (r *Repl) handleConnection(conn net.Conn) {
