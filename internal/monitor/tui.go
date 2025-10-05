@@ -1,16 +1,11 @@
 package monitor
 
 import (
-	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net"
-	"strings"
 	"time"
 
-	arkstats "github.com/mlange-42/ark/ecs/stats"
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
@@ -49,7 +44,7 @@ const (
 )
 
 type Monitor struct {
-	conn      net.Conn
+	stats     StatsGetter
 	widgets   *widgets
 	cont      *container.Container
 	ticks     int
@@ -57,7 +52,7 @@ type Monitor struct {
 	lastTime  time.Time
 }
 
-func NewMonitor(conn net.Conn) *Monitor {
+func New(stats StatsGetter) *Monitor {
 	terminal := tcellTerminal
 
 	var t terminalapi.Terminal
@@ -98,7 +93,7 @@ func NewMonitor(conn net.Conn) *Monitor {
 	}
 
 	monitor := &Monitor{
-		conn:    conn,
+		stats:   stats,
 		widgets: w,
 		cont:    c,
 	}
@@ -119,9 +114,7 @@ func NewMonitor(conn net.Conn) *Monitor {
 			cmd = "shrink"
 		}
 		if cmd != "" {
-			if _, err := fmt.Fprintln(conn, cmd); err != nil {
-				fmt.Println("Connection closed.")
-			}
+			stats.Exec(cmd)
 		}
 	}
 	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(redrawInterval)); err != nil {
@@ -131,35 +124,9 @@ func NewMonitor(conn net.Conn) *Monitor {
 	return monitor
 }
 
-type tuiStats struct {
-	Ticks int
-	Stats *arkstats.World
-}
-
 func (m *Monitor) update() error {
-	out := strings.Builder{}
-
-	serverReader := bufio.NewReader(m.conn)
-
-	// Send command to server
-	fmt.Fprintln(m.conn, "stats-json")
-
-	// Read response
-	for {
-		line, err := serverReader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Connection closed.")
-			return err
-		}
-		trimmed := strings.TrimSpace(line)
-		if trimmed == ">" {
-			break // prompt received, ready for next input
-		}
-		fmt.Fprint(&out, line)
-	}
-
-	s := tuiStats{}
-	if err := json.Unmarshal([]byte(out.String()), &s); err != nil {
+	s, err := m.stats.Get()
+	if err != nil {
 		return err
 	}
 

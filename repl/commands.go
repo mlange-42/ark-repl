@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/mlange-42/ark-repl/internal/monitor"
 	"github.com/mlange-42/ark/ecs"
-	arkstats "github.com/mlange-42/ark/ecs/stats"
 )
 
 // Command interface.
@@ -289,11 +289,6 @@ func (c runTui) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Starts the monitoring TUI app.")
 }
 
-type tuiStats struct {
-	Ticks int
-	Stats *arkstats.World
-}
-
 type getStats struct{}
 
 func (c getStats) Execute(repl *Repl, out *strings.Builder) {
@@ -304,7 +299,7 @@ func (c getStats) Execute(repl *Repl, out *strings.Builder) {
 		ticks = repl.callbacks.Ticks()
 	}
 
-	s := tuiStats{
+	s := monitor.Stats{
 		Stats: stats,
 		Ticks: ticks,
 	}

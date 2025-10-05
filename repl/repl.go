@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/mlange-42/ark-repl/internal/monitor"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -207,7 +208,7 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) bool {
 	cmdType := reflect.TypeOf(cmd)
 	switch cmdType {
 	case runTuiCmd:
-		_ = newMonitor(r)
+		_ = monitor.New(&localStats{repl: r})
 		r.execCommand(cmd, out)
 	case exitCmd:
 		return false
