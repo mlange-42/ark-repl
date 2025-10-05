@@ -39,9 +39,9 @@ func (c subSubCmd) Help(repl *Repl, out *strings.Builder) {
 }
 
 func TestParser(t *testing.T) {
-	allCommands := map[string]Command{
-		"help": help{},
-		"cmd":  cmd{},
+	allCommands := map[string]commandEntry{
+		"help": {help{}, true},
+		"cmd":  {cmd{}, true},
 	}
 
 	cmdString := "cmd sub subsub arg1 arg2=1 arg3=2.0 arg4=test"

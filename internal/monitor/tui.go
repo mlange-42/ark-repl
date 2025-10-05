@@ -1,11 +1,9 @@
-package repl
+package monitor
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/mum4k/termdash"
@@ -45,8 +43,9 @@ const (
 	tcellTerminal   = "tcell"
 )
 
-type monitor struct {
-	repl      *Repl
+// Monitor TUI.
+type Monitor struct {
+	stats     Connection
 	widgets   *widgets
 	cont      *container.Container
 	ticks     int
@@ -54,7 +53,8 @@ type monitor struct {
 	lastTime  time.Time
 }
 
-func newMonitor(repl *Repl) *monitor {
+// New monitor TUI.
+func New(stats Connection) *Monitor {
 	terminal := tcellTerminal
 
 	var t terminalapi.Terminal
@@ -80,7 +80,7 @@ func newMonitor(repl *Repl) *monitor {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	w, err := newWidgets(ctx, t, c)
+	w, err := newWidgets()
 	if err != nil {
 		panic(err)
 	}
@@ -94,8 +94,8 @@ func newMonitor(repl *Repl) *monitor {
 		panic(err)
 	}
 
-	monitor := &monitor{
-		repl:    repl,
+	monitor := &Monitor{
+		stats:   stats,
 		widgets: w,
 		cont:    c,
 	}
@@ -106,14 +106,19 @@ func newMonitor(repl *Repl) *monitor {
 		if k.Key == keyboard.KeyEsc || k.Key == keyboard.KeyCtrlC {
 			cancel()
 		}
-		out := strings.Builder{}
+		cmd := ""
 		switch k.Key {
 		case 'p':
-			repl.execCommand(pause{}, &out)
+			cmd = "pause"
 		case 'r':
-			repl.execCommand(resume{}, &out)
+			cmd = "resume"
 		case 's':
-			repl.execCommand(shrink{}, &out)
+			cmd = "shrink"
+		}
+		if cmd != "" {
+			if err := stats.Exec(cmd); err != nil {
+				panic(err)
+			}
 		}
 	}
 	if err := termdash.Run(ctx, t, c, termdash.KeyboardSubscriber(quitter), termdash.RedrawInterval(redrawInterval)); err != nil {
@@ -123,12 +128,9 @@ func newMonitor(repl *Repl) *monitor {
 	return monitor
 }
 
-func (m *monitor) update() error {
-	out := strings.Builder{}
-	m.repl.execCommand(getStats{}, &out)
-
-	s := tuiStats{}
-	if err := json.Unmarshal([]byte(out.String()), &s); err != nil {
+func (m *Monitor) update() error {
+	s, err := m.stats.Get()
+	if err != nil {
 		return err
 	}
 
@@ -155,7 +157,7 @@ func (m *monitor) update() error {
 }
 
 // newWidgets creates all widgets used by this demo.
-func newWidgets(ctx context.Context, t terminalapi.Terminal, c *container.Container) (*widgets, error) {
+func newWidgets() (*widgets, error) {
 	spMemory, err := sparkline.New(
 		sparkline.Color(cell.ColorGreen),
 	)

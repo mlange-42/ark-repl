@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 	"strings"
+
+	"github.com/mlange-42/ark-repl/internal/monitor"
 )
 
 func main() {
@@ -41,6 +43,11 @@ func main() {
 			break
 		}
 		input := clientReader.Text()
+
+		if input == "monitor" {
+			_ = monitor.New(&monitor.RemoteConnection{Conn: conn})
+			continue
+		}
 
 		// Send command to server
 		fmt.Fprintln(conn, input)

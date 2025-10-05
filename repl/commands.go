@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/mlange-42/ark-repl/internal/monitor"
 	"github.com/mlange-42/ark/ecs"
-	arkstats "github.com/mlange-42/ark/ecs/stats"
 )
 
 // Command interface.
@@ -17,15 +17,23 @@ type Command interface {
 	Help(repl *Repl, out *strings.Builder)
 }
 
+type commandEntry struct {
+	command Command
+	visible bool
+}
+
 type help struct{}
 
 func (c help) Execute(repl *Repl, out *strings.Builder) {
 	cmds := make([]string, 0, len(repl.commands))
 	help := make(map[string]string, len(repl.commands))
 	for cmd, obj := range repl.commands {
+		if !obj.visible {
+			continue
+		}
 		cmds = append(cmds, cmd)
 		out := strings.Builder{}
-		obj.Help(repl, &out)
+		obj.command.Help(repl, &out)
 		parts := strings.SplitN(out.String(), "\n", 2)
 		var helpText string
 		if len(parts) > 0 {
@@ -289,11 +297,6 @@ func (c runTui) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Starts the monitoring TUI app.")
 }
 
-type tuiStats struct {
-	Ticks int
-	Stats *arkstats.World
-}
-
 type getStats struct{}
 
 func (c getStats) Execute(repl *Repl, out *strings.Builder) {
@@ -304,7 +307,7 @@ func (c getStats) Execute(repl *Repl, out *strings.Builder) {
 		ticks = repl.callbacks.Ticks()
 	}
 
-	s := tuiStats{
+	s := monitor.Stats{
 		Stats: stats,
 		Ticks: ticks,
 	}
@@ -313,10 +316,10 @@ func (c getStats) Execute(repl *Repl, out *strings.Builder) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = out.Write(enc)
-	if err != nil {
-		panic(err)
-	}
+	out.Write(enc)
+	out.WriteRune('\n')
 }
 
-func (c getStats) Help(repl *Repl, out *strings.Builder) {}
+func (c getStats) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Prints world statistics in JSON format.")
+}
