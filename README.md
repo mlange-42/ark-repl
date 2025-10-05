@@ -19,10 +19,10 @@
 
 ## Features
 
-- Interactive inspection of World internals.
-- Command help inside the REPL.
-- Can control the update loop (pause, resume, stop).
-- Can connect from a separate terminal.
+- Interactive inspection of World state.
+- Control the update loop (pause, resume, stop).
+- Monitoring TUI app for ECS internals.
+- Optionally connect from a separate terminal.
 - Extensible: add your own commands.
 
 ## Installation
