@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func parseInput(input string, commandRegistry map[string]Command) (Command, bool, error) {
+func parseInput(input string, commandRegistry map[string]commandEntry) (Command, bool, error) {
 	tokens := strings.Fields(input)
 	if len(tokens) < 1 {
 		return nil, false, fmt.Errorf("no command provided")
@@ -19,7 +19,7 @@ func parseInput(input string, commandRegistry map[string]Command) (Command, bool
 		return nil, false, fmt.Errorf("unknown command: %s", cmdName)
 	}
 
-	cmdVal := reflect.New(reflect.TypeOf(cmdStruct)).Elem()
+	cmdVal := reflect.New(reflect.TypeOf(cmdStruct.command)).Elem()
 
 	if len(tokens) == 1 {
 		if err := setDefaults(cmdVal); err != nil {

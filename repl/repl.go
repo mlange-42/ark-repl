@@ -34,27 +34,28 @@ type Repl struct {
 	channel   chan func(*ecs.World)
 	world     *ecs.World
 	callbacks Callbacks
-	commands  map[string]Command
+	commands  map[string]commandEntry
 	system    System
 }
 
-var defaultCommands = map[string]Command{
-	"help":       help{},
-	"pause":      pause{},
-	"resume":     resume{},
-	"stop":       stop{},
-	"exit":       exit{},
-	"stats":      stats{},
-	"stats-json": getStats{},
-	"list":       list{},
-	"query":      query{},
-	"shrink":     shrink{},
-	"monitor":    runTui{},
+var defaultCommands = map[string]commandEntry{
+	"help":    {help{}, true},
+	"pause":   {pause{}, true},
+	"resume":  {resume{}, true},
+	"stop":    {stop{}, true},
+	"exit":    {exit{}, true},
+	"stats":   {stats{}, true},
+	"list":    {list{}, true},
+	"query":   {query{}, true},
+	"shrink":  {shrink{}, true},
+	"monitor": {runTui{}, true},
+
+	"stats-json": {getStats{}, false},
 }
 
 // NewRepl creates a new [Repl].
 func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
-	commands := map[string]Command{}
+	commands := map[string]commandEntry{}
 	for k, v := range defaultCommands {
 		commands[k] = v
 	}
@@ -80,7 +81,7 @@ func (r *Repl) AddCommand(name string, cmd Command) error {
 	if _, ok := r.commands[name]; ok {
 		return fmt.Errorf("command '%s' is already registered", name)
 	}
-	r.commands[name] = cmd
+	r.commands[name] = commandEntry{cmd, true}
 	return nil
 }
 

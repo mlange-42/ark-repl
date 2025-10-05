@@ -17,15 +17,23 @@ type Command interface {
 	Help(repl *Repl, out *strings.Builder)
 }
 
+type commandEntry struct {
+	command Command
+	visible bool
+}
+
 type help struct{}
 
 func (c help) Execute(repl *Repl, out *strings.Builder) {
 	cmds := make([]string, 0, len(repl.commands))
 	help := make(map[string]string, len(repl.commands))
 	for cmd, obj := range repl.commands {
+		if !obj.visible {
+			continue
+		}
 		cmds = append(cmds, cmd)
 		out := strings.Builder{}
-		obj.Help(repl, &out)
+		obj.command.Help(repl, &out)
 		parts := strings.SplitN(out.String(), "\n", 2)
 		var helpText string
 		if len(parts) > 0 {
