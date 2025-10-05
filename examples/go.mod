@@ -13,6 +13,7 @@ replace github.com/mlange-42/ark-repl => ../
 require (
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/gdamore/tcell/v2 v2.7.4 // indirect
+	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mum4k/termdash v0.20.0 // indirect

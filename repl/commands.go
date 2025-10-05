@@ -1,12 +1,12 @@
 package repl
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"slices"
 	"strings"
 
+	"github.com/goccy/go-json"
 	"github.com/mlange-42/ark-repl/internal/monitor"
 	"github.com/mlange-42/ark/ecs"
 )
