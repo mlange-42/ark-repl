@@ -91,6 +91,21 @@ func (c stop) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Stop the connected simulation.")
 }
 
+type exit struct{}
+
+func (c exit) Execute(repl *Repl, out *strings.Builder) {
+	if repl.callbacks.Stop == nil {
+		fmt.Fprint(out, "No stop callback provided\n")
+		return
+	}
+	repl.callbacks.Stop(out)
+	fmt.Fprint(out, "Simulation terminated\n")
+}
+
+func (c exit) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Exit the REPL without stopping the simulation.")
+}
+
 type stats struct{}
 
 func (c stats) Execute(repl *Repl, out *strings.Builder) {

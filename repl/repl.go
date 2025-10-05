@@ -12,6 +12,9 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
+var runTuiCmd = reflect.TypeFor[runTui]()
+var exitCmd = reflect.TypeFor[exit]()
+
 // Callbacks for simulation loop control.
 // Individual callbacks are optional, but required to enable the resp. functionality.
 type Callbacks struct {
@@ -39,6 +42,7 @@ var defaultCommands = map[string]Command{
 	"pause":   pause{},
 	"resume":  resume{},
 	"stop":    stop{},
+	"exit":    exit{},
 	"stats":   stats{},
 	"list":    list{},
 	"query":   query{},
@@ -95,7 +99,10 @@ func (r *Repl) Start() {
 			}
 
 			var out strings.Builder
-			r.handleCommand(line, &out)
+			if !r.handleCommand(line, &out) {
+				fmt.Print(out.String())
+				break
+			}
 			fmt.Print(out.String())
 		}
 	}()
@@ -174,29 +181,38 @@ func (r *Repl) handleConnection(conn net.Conn) {
 		}
 
 		var out strings.Builder
-		r.handleCommand(line, &out)
+		if !r.handleCommand(line, &out) {
+			writer.WriteString(out.String())
+			writer.Flush()
+			break
+		}
 		writer.WriteString(out.String())
 		writer.Flush()
 	}
 }
 
-func (r *Repl) handleCommand(cmdString string, out *strings.Builder) {
+func (r *Repl) handleCommand(cmdString string, out *strings.Builder) bool {
 	cmd, help, err := parseInput(cmdString, r.commands)
 	if err != nil {
 		out.WriteString(err.Error() + "\n")
-		return
+		return true
 	}
 	if help {
 		if err := extractHelp(r, cmd, out); err != nil {
 			panic(err)
 		}
-		return
+		return true
 	}
-	if reflect.TypeOf(cmd) == reflect.TypeFor[runTui]() {
+	cmdType := reflect.TypeOf(cmd)
+	switch cmdType {
+	case runTuiCmd:
 		_ = newMonitor(r)
 		r.execCommand(cmd, out)
+	case exitCmd:
+		return false
 	}
 	r.execCommand(cmd, out)
+	return true
 }
 
 func (r *Repl) execCommand(cmd Command, out *strings.Builder) {
