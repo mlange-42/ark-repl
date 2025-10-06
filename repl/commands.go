@@ -136,20 +136,20 @@ type query struct {
 }
 
 func (c query) Execute(repl *Repl, out *strings.Builder) {
-	comps, err := getComponentIDs(repl.world, c.Comps)
+	comps, err := getComponentIDs(repl.World(), c.Comps)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
 	}
 
-	allIDs := ecs.ComponentIDs(repl.world)
+	allIDs := ecs.ComponentIDs(repl.World())
 	compTypes := make([]reflect.Type, 0, len(allIDs))
 	for _, id := range allIDs {
-		info, _ := ecs.ComponentInfo(repl.world, id)
+		info, _ := ecs.ComponentInfo(repl.World(), id)
 		compTypes = append(compTypes, info.Type)
 	}
 
-	with, err := getComponentIDs(repl.world, c.With)
+	with, err := getComponentIDs(repl.World(), c.With)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
@@ -158,7 +158,7 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 	allComps = append(allComps, comps...)
 	allComps = append(allComps, with...)
 
-	without, err := getComponentIDs(repl.world, c.Without)
+	without, err := getComponentIDs(repl.World(), c.Without)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
@@ -223,7 +223,7 @@ type shrink struct {
 
 func (c shrink) Execute(repl *Repl, out *strings.Builder) {
 	oldMem := repl.World().Stats().Memory
-	repl.world.Shrink()
+	repl.World().Shrink()
 	newMem := repl.World().Stats().Memory
 
 	if newMem != oldMem {
@@ -334,7 +334,7 @@ func (c runTui) Help(out *strings.Builder) {
 type getStats struct{}
 
 func (c getStats) Execute(repl *Repl, out *strings.Builder) {
-	stats := repl.world.Stats()
+	stats := repl.World().Stats()
 
 	ticks := 0
 	if repl.callbacks.Ticks != nil {
