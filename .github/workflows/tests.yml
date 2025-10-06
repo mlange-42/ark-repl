@@ -30,6 +30,26 @@ jobs:
         go test -v -covermode atomic -coverprofile="coverage.out" ./...
         go tool cover -func="coverage.out"
 
+  examples:
+    name: Build examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.24.x'
+      - name: Install dependencies
+        run: |
+          cd examples
+          go get .
+      - name: Build examples
+        run: |
+          cd examples
+          go build ./basic
+          go build ./ark-tools
+          go build ./custom-cmd
+
   lint:
     name: Run linters
     runs-on: ubuntu-latest
