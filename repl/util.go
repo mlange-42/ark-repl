@@ -40,3 +40,12 @@ func numDigits(n int) int {
 	}
 	return int(math.Log10(float64(n))) + 1
 }
+
+func isClosed(ch <-chan struct{}) bool {
+	select {
+	case <-ch:
+		return true
+	default:
+		return false
+	}
+}

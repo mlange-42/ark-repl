@@ -244,7 +244,7 @@ type list struct {
 }
 
 func (c list) Execute(repl *Repl, out *strings.Builder) {
-	c.Help(repl, out)
+	fmt.Fprintln(out, "Lists various things. Run `help list` for details.")
 }
 
 func (c list) Help(repl *Repl, out *strings.Builder) {
@@ -323,7 +323,9 @@ func (c listArchetypes) Help(repl *Repl, out *strings.Builder) {
 
 type runTui struct{}
 
-func (c runTui) Execute(repl *Repl, out *strings.Builder) {}
+func (c runTui) Execute(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "MONITOR")
+}
 
 func (c runTui) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Starts the monitoring TUI app.")

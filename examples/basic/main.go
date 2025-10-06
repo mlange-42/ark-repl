@@ -15,7 +15,7 @@ func main() {
 	// Populate the world so there is something to see.
 	examples.Populate(&world)
 
-	pause := true
+	pause := false
 	stop := false
 
 	// Callbacks for loop control.
