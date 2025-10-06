@@ -247,7 +247,7 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) bool {
 		return true
 	}
 	if help {
-		if err := extractHelp(r, cmd, out); err != nil {
+		if err := extractHelp(cmd, out); err != nil {
 			panic(err)
 		}
 		return true

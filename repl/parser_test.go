@@ -13,7 +13,7 @@ type cmd struct {
 }
 
 func (c cmd) Execute(repl *Repl, out *strings.Builder) {}
-func (c cmd) Help(repl *Repl, out *strings.Builder) {
+func (c cmd) Help(out *strings.Builder) {
 	fmt.Fprint(out, "Help text.")
 }
 
@@ -34,7 +34,7 @@ type subSubCmd struct {
 }
 
 func (c subSubCmd) Execute(repl *Repl, out *strings.Builder) {}
-func (c subSubCmd) Help(repl *Repl, out *strings.Builder) {
+func (c subSubCmd) Help(out *strings.Builder) {
 	fmt.Fprint(out, "Help text.")
 }
 
@@ -89,16 +89,15 @@ func TestParserListEntities(t *testing.T) {
 
 func TestExtractHelp(t *testing.T) {
 	out := strings.Builder{}
-	repl := NewRepl(nil, Callbacks{})
 
-	extractHelp(repl, cmd{}, &out)
+	extractHelp(cmd{}, &out)
 	assert.Equal(t, `Help text.
 Commands:
   sub          Help text.
 `, out.String())
 
 	out = strings.Builder{}
-	extractHelp(repl, subSubCmd{}, &out)
+	extractHelp(subSubCmd{}, &out)
 	assert.Equal(t, `Help text.
 Options:
   arg1          bool     help text 
