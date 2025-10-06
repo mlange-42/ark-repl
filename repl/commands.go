@@ -240,6 +240,7 @@ func (c shrink) Help(repl *Repl, out *strings.Builder) {
 type list struct {
 	Resources  listResources
 	Components listComponents
+	Archetypes listArchetypes
 }
 
 func (c list) Execute(repl *Repl, out *strings.Builder) {
@@ -254,10 +255,11 @@ type listResources struct{}
 
 func (c listResources) Execute(repl *Repl, out *strings.Builder) {
 	allRes := ecs.ResourceIDs(repl.World())
+	padIDs := numDigits(len(allRes))
 	cnt := 0
 	for _, id := range allRes {
 		res := repl.World().Resources().Get(id)
-		fmt.Fprintf(out, "%d: %#v\n", id.Index(), res)
+		fmt.Fprintf(out, "%*d: %#v\n", padIDs, id.Index(), res)
 		cnt++
 	}
 	if cnt == 0 {
@@ -273,10 +275,11 @@ type listComponents struct{}
 
 func (c listComponents) Execute(repl *Repl, out *strings.Builder) {
 	allComp := ecs.ComponentIDs(repl.World())
+	padIDs := numDigits(len(allComp))
 	cnt := 0
 	for _, id := range allComp {
 		if info, ok := ecs.ComponentInfo(repl.World(), id); ok {
-			fmt.Fprintf(out, "%d: %s\n", id.Index(), info.Type.String())
+			fmt.Fprintf(out, "%*d: %s\n", padIDs, id.Index(), info.Type.String())
 			cnt++
 		}
 	}
@@ -287,6 +290,35 @@ func (c listComponents) Execute(repl *Repl, out *strings.Builder) {
 
 func (c listComponents) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Lists component types.")
+}
+
+type listArchetypes struct{}
+
+func (c listArchetypes) Execute(repl *Repl, out *strings.Builder) {
+	stats := repl.World().Stats()
+
+	maxEntities := 0
+	maxTable := 0
+	for i := range stats.Archetypes {
+		arch := &stats.Archetypes[i]
+		if arch.Size > maxEntities {
+			maxEntities = arch.Size
+		}
+		if len(arch.Tables) > maxTable {
+			maxTable = len(arch.Tables)
+		}
+	}
+	padIDs := numDigits(len(stats.Archetypes))
+	padEntities := numDigits(maxEntities)
+	padTables := numDigits(maxTable)
+	for i := range stats.Archetypes {
+		arch := &stats.Archetypes[i]
+		fmt.Fprintf(out, "%*d: %*d entities, %*d table(s)  %s\n", padIDs, i, padEntities, arch.Size, padTables, len(arch.Tables), strings.Join(arch.ComponentTypeNames, " "))
+	}
+}
+
+func (c listArchetypes) Help(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "Lists archetypes.")
 }
 
 type runTui struct{}

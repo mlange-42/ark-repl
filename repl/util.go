@@ -2,6 +2,7 @@ package repl
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/mlange-42/ark/ecs"
 )
@@ -31,4 +32,11 @@ func getComponentIDs(world *ecs.World, compNames []string) ([]ecs.ID, error) {
 
 func formatMemory(bytes int) string {
 	return fmt.Sprintf("%.1fkB", float64(bytes)/1024.0)
+}
+
+func numDigits(n int) int {
+	if n == 0 {
+		return 1
+	}
+	return int(math.Log10(float64(n))) + 1
 }
