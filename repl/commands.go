@@ -323,7 +323,9 @@ func (c listArchetypes) Help(repl *Repl, out *strings.Builder) {
 
 type runTui struct{}
 
-func (c runTui) Execute(repl *Repl, out *strings.Builder) {}
+func (c runTui) Execute(repl *Repl, out *strings.Builder) {
+	fmt.Fprintln(out, "MONITOR")
+}
 
 func (c runTui) Help(repl *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Starts the monitoring TUI app.")

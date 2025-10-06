@@ -15,7 +15,7 @@ func main() {
 	// Populate the world so there is something to see.
 	examples.Populate(&world)
 
-	pause := true
+	pause := false
 	stop := false
 
 	// Callbacks for loop control.
@@ -37,7 +37,7 @@ func main() {
 	repl := repl.NewRepl(&world, callbacks)
 
 	// For control from this terminal:
-	repl.Start("monitor")
+	repl.Start()
 
 	// For control from another terminal:
 	//repl.StartServer(":9000")

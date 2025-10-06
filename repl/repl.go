@@ -32,6 +32,7 @@ type Callbacks struct {
 // Repl is the main entry point.
 type Repl struct {
 	channel   chan func(*ecs.World)
+	init      chan struct{}
 	world     *ecs.World
 	callbacks Callbacks
 	commands  map[string]commandEntry
@@ -61,6 +62,7 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 	}
 	repl := Repl{
 		channel:   make(chan func(*ecs.World)),
+		init:      make(chan struct{}),
 		world:     world,
 		callbacks: callbacks,
 		commands:  commands,
@@ -87,12 +89,14 @@ func (r *Repl) AddCommand(name string, cmd Command) error {
 
 // Start the REPL.
 //
-// Commands to execute at the first [Repl.Poll] (e.g. "pause", "monitor", ...) can be given as arguments.
+// Commands to execute at the first [Repl.Poll] call can be given as arguments (e.g. "pause", "monitor", ...).
 func (r *Repl) Start(commands ...string) {
-	fmt.Println("Ark REPL started. Type 'help' for commands.")
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
+		fmt.Println("Ark REPL started. Type 'help' for commands.")
 
+		// Initial commands
+		runMonitor := false
 		for _, cmd := range commands {
 			fmt.Printf("> %s\n", cmd)
 			var out strings.Builder
@@ -100,9 +104,20 @@ func (r *Repl) Start(commands ...string) {
 				fmt.Print(out.String())
 				break
 			}
-			fmt.Print(out.String())
+			s := out.String()
+			if s == "MONITOR\n" {
+				runMonitor = true
+				continue
+			}
+			fmt.Print(s)
+		}
+		close(r.init)
+
+		if runMonitor {
+			monitor.New(&localConnection{repl: r})
 		}
 
+		// Normal commands
 		for {
 			fmt.Print("> ")
 			if !scanner.Scan() {
@@ -118,7 +133,11 @@ func (r *Repl) Start(commands ...string) {
 				fmt.Print(out.String())
 				break
 			}
-			fmt.Print(out.String())
+			s := out.String()
+			if s == "MONITOR\n" {
+				monitor.New(&localConnection{repl: r})
+			}
+			fmt.Print(s)
 		}
 	}()
 }
@@ -131,6 +150,7 @@ func (r *Repl) StartServer(addr string) {
 		return
 	}
 	fmt.Println("REPL server listening on", addr)
+	close(r.init)
 
 	go func() {
 		for {
@@ -146,6 +166,20 @@ func (r *Repl) StartServer(addr string) {
 
 // Poll runs all commands.
 func (r *Repl) Poll() {
+	// Block for initial commands
+	if !isClosed(r.init) {
+		for {
+			select {
+			case cmd := <-r.channel:
+				cmd(r.world)
+			case <-r.init:
+				// init closed, switch to single-command mode
+				return
+			}
+		}
+	}
+
+	// Non-blocking for normal commands
 	for {
 		select {
 		case cmd := <-r.channel:
@@ -221,8 +255,8 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) bool {
 	cmdType := reflect.TypeOf(cmd)
 	switch cmdType {
 	case runTuiCmd:
-		_ = monitor.New(&localConnection{repl: r})
-		r.execCommand(cmd, out)
+		//_ = monitor.New(&localConnection{repl: r})
+		//r.execCommand(cmd, out)
 	case exitCmd:
 		return false
 	}
