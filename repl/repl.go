@@ -143,6 +143,8 @@ func (r *Repl) runInitialCommands(commands []string) bool {
 }
 
 // StartServer starts a server for the REPL.
+//
+// The addr argument should be either 'host:port' or just ':port'.
 func (r *Repl) StartServer(addr string) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {

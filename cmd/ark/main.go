@@ -7,11 +7,21 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alecthomas/kong"
 	"github.com/mlange-42/ark-repl/internal/monitor"
 )
 
+// CLI arguments.
+type CLI struct {
+	Address string `arg:"" help:"Server address to connect to ('host:port' or just ':port'). Default: localhost:9000" default:"localhost:9000"`
+}
+
 func main() {
-	conn, err := net.Dial("tcp", "localhost:9000")
+	var cli CLI
+	kong.Parse(&cli)
+	addr := normalizeAddress(cli.Address)
+
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		fmt.Println("Failed to connect:", err)
 		return
@@ -72,4 +82,11 @@ func main() {
 			fmt.Print(line)
 		}
 	}
+}
+
+func normalizeAddress(input string) string {
+	if strings.HasPrefix(input, ":") {
+		return "localhost" + input
+	}
+	return input
 }
