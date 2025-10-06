@@ -16,7 +16,11 @@ func main() {
 		fmt.Println("Failed to connect:", err)
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	fmt.Println("Connected to Ark REPL.")
 	serverReader := bufio.NewReader(conn)
@@ -50,7 +54,9 @@ func main() {
 		}
 
 		// Send command to server
-		fmt.Fprintln(conn, input)
+		if _, err := fmt.Fprintln(conn, input); err != nil {
+			panic(err)
+		}
 
 		// Read response until next prompt
 		for {

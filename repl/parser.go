@@ -173,7 +173,7 @@ func setField(field reflect.Value, kv []string) error {
 	return nil
 }
 
-func extractHelp(repl *Repl, cmd Command, out *strings.Builder) error {
+func extractHelp(cmd Command, out *strings.Builder) error {
 	commands := []string{}
 	cmdHelp := []string{}
 	options := []string{}
@@ -192,7 +192,7 @@ func extractHelp(repl *Repl, cmd Command, out *strings.Builder) error {
 				return fmt.Errorf("command %s does not implement interface Command", cmdName)
 			}
 			out := strings.Builder{}
-			interf.Help(repl, &out)
+			interf.Help(&out)
 			parts := strings.SplitN(out.String(), "\n", 2)
 			var helpText string
 			if len(parts) > 0 {
@@ -230,7 +230,7 @@ func extractHelp(repl *Repl, cmd Command, out *strings.Builder) error {
 
 		help, ok := typeField.Tag.Lookup("help")
 		if ok {
-			help = help + " "
+			help += " "
 		}
 		defaultValue, ok := typeField.Tag.Lookup("default")
 		if ok {
@@ -244,7 +244,7 @@ func extractHelp(repl *Repl, cmd Command, out *strings.Builder) error {
 			))
 	}
 
-	cmd.Help(repl, out)
+	cmd.Help(out)
 	if len(commands) > 0 {
 		fmt.Fprintln(out, "\nCommands:")
 		for i, c := range commands {

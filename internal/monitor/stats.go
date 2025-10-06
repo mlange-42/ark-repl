@@ -32,10 +32,13 @@ func (s *RemoteConnection) Get() (Stats, error) {
 	out := strings.Builder{}
 
 	serverReader := bufio.NewReader(s.Conn)
-	// Send command to server
-	fmt.Fprintln(s.Conn, "stats-json")
-
 	st := Stats{}
+
+	// Send command to server
+	if _, err := fmt.Fprintln(s.Conn, "stats-json"); err != nil {
+		return st, err
+	}
+
 	// Read response
 	for {
 		line, err := serverReader.ReadString('\n')

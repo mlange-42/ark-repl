@@ -134,19 +134,35 @@ func (m *Monitor) update() error {
 		return err
 	}
 
-	m.widgets.spMemory.Add([]int{s.Stats.MemoryUsed})
-	m.cont.Update(spMemoryID, container.BorderTitle(fmt.Sprintf("Memory %.1fkB", float64(s.Stats.MemoryUsed)/1024.0)))
+	if err := m.widgets.spMemory.Add([]int{s.Stats.MemoryUsed}); err != nil {
+		return err
+	}
+	if err := m.cont.Update(spMemoryID, container.BorderTitle(fmt.Sprintf("Memory %.1fkB", float64(s.Stats.MemoryUsed)/1024.0))); err != nil {
+		return err
+	}
 
-	m.widgets.spReserved.Add([]int{s.Stats.Memory})
-	m.cont.Update(spReservedID, container.BorderTitle(fmt.Sprintf("Reserved %.1fkB", float64(s.Stats.Memory)/1024.0)))
+	if err := m.widgets.spReserved.Add([]int{s.Stats.Memory}); err != nil {
+		return err
+	}
+	if err := m.cont.Update(spReservedID, container.BorderTitle(fmt.Sprintf("Reserved %.1fkB", float64(s.Stats.Memory)/1024.0))); err != nil {
+		return err
+	}
 
-	m.widgets.spEntities.Add([]int{s.Stats.Entities.Used})
-	m.cont.Update(spEntitiesID, container.BorderTitle(fmt.Sprintf("Entities %d", s.Stats.Entities.Used)))
+	if err := m.widgets.spEntities.Add([]int{s.Stats.Entities.Used}); err != nil {
+		return err
+	}
+	if err := m.cont.Update(spEntitiesID, container.BorderTitle(fmt.Sprintf("Entities %d", s.Stats.Entities.Used))); err != nil {
+		return err
+	}
 
 	timePassed := time.Since(m.lastTime)
 	fps := float64(s.Ticks-m.lastTicks) / timePassed.Seconds()
-	m.widgets.spFPS.Add([]int{max(int(fps), 0)})
-	m.cont.Update(spFpsID, container.BorderTitle(fmt.Sprintf("FPS %.0f", fps)))
+	if err := m.widgets.spFPS.Add([]int{max(int(fps), 0)}); err != nil {
+		return err
+	}
+	if err := m.cont.Update(spFpsID, container.BorderTitle(fmt.Sprintf("FPS %.0f", fps))); err != nil {
+		return err
+	}
 
 	m.lastTime = time.Now()
 	m.lastTicks = s.Ticks

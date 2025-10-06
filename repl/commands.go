@@ -14,7 +14,7 @@ import (
 // Command interface.
 type Command interface {
 	Execute(repl *Repl, out *strings.Builder)
-	Help(repl *Repl, out *strings.Builder)
+	Help(out *strings.Builder)
 }
 
 type commandEntry struct {
@@ -33,7 +33,7 @@ func (c help) Execute(repl *Repl, out *strings.Builder) {
 		}
 		cmds = append(cmds, cmd)
 		out := strings.Builder{}
-		obj.command.Help(repl, &out)
+		obj.command.Help(&out)
 		parts := strings.SplitN(out.String(), "\n", 2)
 		var helpText string
 		if len(parts) > 0 {
@@ -50,7 +50,7 @@ func (c help) Execute(repl *Repl, out *strings.Builder) {
 	}
 }
 
-func (c help) Help(repl *Repl, out *strings.Builder) {
+func (c help) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Show this help.")
 }
 
@@ -65,7 +65,7 @@ func (c pause) Execute(repl *Repl, out *strings.Builder) {
 	fmt.Fprint(out, "Simulation paused\n")
 }
 
-func (c pause) Help(repl *Repl, out *strings.Builder) {
+func (c pause) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Pause the connected simulation.")
 }
 
@@ -80,7 +80,7 @@ func (c resume) Execute(repl *Repl, out *strings.Builder) {
 	fmt.Fprint(out, "Simulation resumed\n")
 }
 
-func (c resume) Help(repl *Repl, out *strings.Builder) {
+func (c resume) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Resume the connected simulation.")
 }
 
@@ -95,7 +95,7 @@ func (c stop) Execute(repl *Repl, out *strings.Builder) {
 	fmt.Fprint(out, "Simulation terminated\n")
 }
 
-func (c stop) Help(repl *Repl, out *strings.Builder) {
+func (c stop) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Stop the connected simulation.")
 }
 
@@ -110,7 +110,7 @@ func (c exit) Execute(repl *Repl, out *strings.Builder) {
 	fmt.Fprint(out, "Simulation terminated\n")
 }
 
-func (c exit) Help(repl *Repl, out *strings.Builder) {
+func (c exit) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Exit the REPL without stopping the simulation.")
 }
 
@@ -121,7 +121,7 @@ func (c stats) Execute(repl *Repl, out *strings.Builder) {
 	fmt.Fprint(out, stats)
 }
 
-func (c stats) Help(repl *Repl, out *strings.Builder) {
+func (c stats) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Prints world statistics.")
 }
 
@@ -214,7 +214,7 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 	fmt.Fprintf(out, "Listed %d of %d entities (page %d of %d)\n", shown, total, c.Page, (total+c.N-1)/c.N)
 }
 
-func (c query) Help(repl *Repl, out *strings.Builder) {
+func (c query) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Query entities.")
 }
 
@@ -227,13 +227,13 @@ func (c shrink) Execute(repl *Repl, out *strings.Builder) {
 	newMem := repl.World().Stats().Memory
 
 	if newMem != oldMem {
-		fmt.Fprintf(out, "Shrinked world memory: %s -> %s\n", formatMemory(oldMem), formatMemory(newMem))
+		fmt.Fprintf(out, "Shrink world memory: %s -> %s\n", formatMemory(oldMem), formatMemory(newMem))
 	} else {
 		fmt.Fprintf(out, "Shrink had no effect: %s\n", formatMemory(newMem))
 	}
 }
 
-func (c shrink) Help(repl *Repl, out *strings.Builder) {
+func (c shrink) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Shrink world memory.")
 }
 
@@ -243,11 +243,11 @@ type list struct {
 	Archetypes listArchetypes
 }
 
-func (c list) Execute(repl *Repl, out *strings.Builder) {
+func (c list) Execute(_ *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "Lists various things. Run `help list` for details.")
 }
 
-func (c list) Help(repl *Repl, out *strings.Builder) {
+func (c list) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Lists various things.")
 }
 
@@ -267,7 +267,7 @@ func (c listResources) Execute(repl *Repl, out *strings.Builder) {
 	}
 }
 
-func (c listResources) Help(repl *Repl, out *strings.Builder) {
+func (c listResources) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Lists resources.")
 }
 
@@ -288,7 +288,7 @@ func (c listComponents) Execute(repl *Repl, out *strings.Builder) {
 	}
 }
 
-func (c listComponents) Help(repl *Repl, out *strings.Builder) {
+func (c listComponents) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Lists component types.")
 }
 
@@ -317,17 +317,17 @@ func (c listArchetypes) Execute(repl *Repl, out *strings.Builder) {
 	}
 }
 
-func (c listArchetypes) Help(repl *Repl, out *strings.Builder) {
+func (c listArchetypes) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Lists archetypes.")
 }
 
 type runTui struct{}
 
-func (c runTui) Execute(repl *Repl, out *strings.Builder) {
+func (c runTui) Execute(_ *Repl, out *strings.Builder) {
 	fmt.Fprintln(out, "MONITOR")
 }
 
-func (c runTui) Help(repl *Repl, out *strings.Builder) {
+func (c runTui) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Starts the monitoring TUI app.")
 }
 
@@ -354,6 +354,6 @@ func (c getStats) Execute(repl *Repl, out *strings.Builder) {
 	out.WriteRune('\n')
 }
 
-func (c getStats) Help(repl *Repl, out *strings.Builder) {
+func (c getStats) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Prints world statistics in JSON format.")
 }

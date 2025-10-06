@@ -22,7 +22,7 @@ func (c customCommand) Execute(repl *repl.Repl, out *strings.Builder) {
 	}
 }
 
-func (c customCommand) Help(repl *repl.Repl, out *strings.Builder) {
+func (c customCommand) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "A custom command.")
 }
 
