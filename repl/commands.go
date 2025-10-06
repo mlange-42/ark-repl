@@ -28,7 +28,7 @@ type help struct {
 	repl *Repl
 }
 
-func (c help) Execute(world *ecs.World, out *strings.Builder) {
+func (c help) Execute(_ *ecs.World, out *strings.Builder) {
 	cmds := make([]string, 0, len(c.repl.commands))
 	help := make(map[string]string, len(c.repl.commands))
 	for cmd, obj := range c.repl.commands {
@@ -62,7 +62,7 @@ type pause struct {
 	repl *Repl
 }
 
-func (c pause) Execute(world *ecs.World, out *strings.Builder) {
+func (c pause) Execute(_ *ecs.World, out *strings.Builder) {
 	if c.repl.callbacks.Pause == nil {
 		fmt.Fprint(out, "No pause callback provided\n")
 		return
@@ -79,7 +79,7 @@ type resume struct {
 	repl *Repl
 }
 
-func (c resume) Execute(world *ecs.World, out *strings.Builder) {
+func (c resume) Execute(_ *ecs.World, out *strings.Builder) {
 	if c.repl.callbacks.Resume == nil {
 		fmt.Fprint(out, "No resume callback provided\n")
 		return
@@ -96,7 +96,7 @@ type stop struct {
 	repl *Repl
 }
 
-func (c stop) Execute(world *ecs.World, out *strings.Builder) {
+func (c stop) Execute(_ *ecs.World, out *strings.Builder) {
 	if c.repl.callbacks.Stop == nil {
 		fmt.Fprint(out, "No stop callback provided\n")
 		return
@@ -111,7 +111,7 @@ func (c stop) Help(out *strings.Builder) {
 
 type exit struct{}
 
-func (c exit) Execute(world *ecs.World, out *strings.Builder) {}
+func (c exit) Execute(_ *ecs.World, _ *strings.Builder) {}
 
 func (c exit) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Exit the REPL without stopping the simulation.")
