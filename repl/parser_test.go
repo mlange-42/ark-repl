@@ -22,7 +22,7 @@ type subCmd struct {
 }
 
 func (c subCmd) Execute(repl *Repl, out *strings.Builder) {}
-func (c subCmd) Help(repl *Repl, out *strings.Builder) {
+func (c subCmd) Help(out *strings.Builder) {
 	fmt.Fprint(out, "Help text.")
 }
 
