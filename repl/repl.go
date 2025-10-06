@@ -99,17 +99,16 @@ func (r *Repl) Start(commands ...string) {
 		runMonitor := false
 		for _, cmd := range commands {
 			fmt.Printf("> %s\n", cmd)
+			if cmd == "monitor" {
+				runMonitor = true
+				continue
+			}
 			var out strings.Builder
 			if !r.handleCommand(cmd, &out) {
 				fmt.Print(out.String())
 				break
 			}
-			s := out.String()
-			if s == "MONITOR\n" {
-				runMonitor = true
-				continue
-			}
-			fmt.Print(s)
+			fmt.Print(out.String())
 		}
 		close(r.init)
 
@@ -128,16 +127,17 @@ func (r *Repl) Start(commands ...string) {
 				continue
 			}
 
+			if line == "monitor" {
+				monitor.New(&localConnection{repl: r})
+				continue
+			}
+
 			var out strings.Builder
 			if !r.handleCommand(line, &out) {
 				fmt.Print(out.String())
 				break
 			}
-			s := out.String()
-			if s == "MONITOR\n" {
-				monitor.New(&localConnection{repl: r})
-			}
-			fmt.Print(s)
+			fmt.Print(out.String())
 		}
 	}()
 }
