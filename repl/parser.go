@@ -19,7 +19,9 @@ func parseInput(input string, commandRegistry map[string]commandEntry) (Command,
 		return nil, false, fmt.Errorf("unknown command: %s", cmdName)
 	}
 
+	originalVal := reflect.ValueOf(cmdStruct.command)
 	cmdVal := reflect.New(reflect.TypeOf(cmdStruct.command)).Elem()
+	cmdVal.Set(originalVal)
 
 	if len(tokens) == 1 {
 		if err := setDefaults(cmdVal); err != nil {
