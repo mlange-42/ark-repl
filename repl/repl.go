@@ -13,7 +13,6 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-var runTuiCmd = reflect.TypeFor[runTui]()
 var exitCmd = reflect.TypeFor[exit]()
 
 // Callbacks for simulation loop control.
