@@ -46,36 +46,38 @@ func TestParser(t *testing.T) {
 	}
 
 	cmdString := "cmd sub subsub arg1 arg2=1 arg3=2.0 arg4=test"
-	out, help, err := parseInput(cmdString, allCommands)
+	out, isHelp, err := parseInput(cmdString, allCommands)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
-	assert.False(t, help)
+	assert.False(t, isHelp)
 	assert.Equal(t, `repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:"test"}`, fmt.Sprintf("%#v", out))
 
 	cmdString = "cmd sub subsub"
-	out, help, err = parseInput(cmdString, allCommands)
+	out, isHelp, err = parseInput(cmdString, allCommands)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
-	assert.False(t, help)
+	assert.False(t, isHelp)
 	assert.Equal(t, `repl.subSubCmd{Arg1:false, Arg2:5, Arg3:3.5, Arg4:"abc"}`, fmt.Sprintf("%#v", out))
 
 	cmdString = "help cmd sub subsub arg1 arg2=1 arg3=2.0 arg4=test"
-	out, help, err = parseInput(cmdString, allCommands)
+	out, isHelp, err = parseInput(cmdString, allCommands)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
-	assert.True(t, help)
+	assert.True(t, isHelp)
 	assert.Equal(t, `repl.subSubCmd{Arg1:true, Arg2:1, Arg3:2, Arg4:"test"}`, fmt.Sprintf("%#v", out))
 
 	cmdString = "help"
-	out, help, err = parseInput(cmdString, allCommands)
+	out, isHelp, err = parseInput(cmdString, allCommands)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
-	assert.False(t, help)
-	assert.Equal(t, "repl.help{}", fmt.Sprintf("%#v", out))
+	assert.False(t, isHelp)
+
+	_, ok := out.(help)
+	assert.True(t, ok)
 }
 
 func TestParserListEntities(t *testing.T) {
