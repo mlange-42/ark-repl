@@ -90,14 +90,16 @@ func TestParserListEntities(t *testing.T) {
 func TestExtractHelp(t *testing.T) {
 	out := strings.Builder{}
 
-	extractHelp(cmd{}, &out)
+	err := extractHelp(cmd{}, &out)
+	assert.Nil(t, err)
 	assert.Equal(t, `Help text.
 Commands:
   sub          Help text.
 `, out.String())
 
 	out = strings.Builder{}
-	extractHelp(subSubCmd{}, &out)
+	err = extractHelp(subSubCmd{}, &out)
+	assert.Nil(t, err)
 	assert.Equal(t, `Help text.
 Options:
   arg1          bool     help text 

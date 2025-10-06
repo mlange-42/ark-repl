@@ -210,16 +210,28 @@ func (r *Repl) System() *System {
 }
 
 func (r *Repl) handleConnection(conn net.Conn) {
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			panic(err)
+		}
+	}()
 	scanner := bufio.NewScanner(conn)
 	writer := bufio.NewWriter(conn)
 
-	writer.WriteString("Ark REPL connected. Type 'help' for commands.\n")
-	writer.Flush()
+	if _, err := writer.WriteString("Ark REPL connected. Type 'help' for commands.\n"); err != nil {
+		panic(err)
+	}
+	if err := writer.Flush(); err != nil {
+		panic(err)
+	}
 
 	for {
-		writer.WriteString(">\n")
-		writer.Flush()
+		if _, err := writer.WriteString(">\n"); err != nil {
+			panic(err)
+		}
+		if err := writer.Flush(); err != nil {
+			panic(err)
+		}
 
 		if !scanner.Scan() {
 			break
@@ -231,12 +243,20 @@ func (r *Repl) handleConnection(conn net.Conn) {
 
 		var out strings.Builder
 		if !r.handleCommand(line, &out) {
-			writer.WriteString(out.String())
-			writer.Flush()
+			if _, err := writer.WriteString(out.String()); err != nil {
+				panic(err)
+			}
+			if err := writer.Flush(); err != nil {
+				panic(err)
+			}
 			break
 		}
-		writer.WriteString(out.String())
-		writer.Flush()
+		if _, err := writer.WriteString(out.String()); err != nil {
+			panic(err)
+		}
+		if err := writer.Flush(); err != nil {
+			panic(err)
+		}
 	}
 }
 

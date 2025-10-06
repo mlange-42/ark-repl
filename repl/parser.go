@@ -230,7 +230,7 @@ func extractHelp(cmd Command, out *strings.Builder) error {
 
 		help, ok := typeField.Tag.Lookup("help")
 		if ok {
-			help = help + " "
+			help += " "
 		}
 		defaultValue, ok := typeField.Tag.Lookup("default")
 		if ok {
