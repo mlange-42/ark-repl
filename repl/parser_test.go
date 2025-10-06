@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mlange-42/ark/ecs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +13,7 @@ type cmd struct {
 	Sub subCmd
 }
 
-func (c cmd) Execute(repl *Repl, out *strings.Builder) {}
+func (c cmd) Execute(world *ecs.World, out *strings.Builder) {}
 func (c cmd) Help(out *strings.Builder) {
 	fmt.Fprint(out, "Help text.")
 }
@@ -21,7 +22,7 @@ type subCmd struct {
 	SubSub subSubCmd
 }
 
-func (c subCmd) Execute(repl *Repl, out *strings.Builder) {}
+func (c subCmd) Execute(world *ecs.World, out *strings.Builder) {}
 func (c subCmd) Help(out *strings.Builder) {
 	fmt.Fprint(out, "Help text.")
 }
@@ -33,7 +34,7 @@ type subSubCmd struct {
 	Arg4 string  `default:"abc"`
 }
 
-func (c subSubCmd) Execute(repl *Repl, out *strings.Builder) {}
+func (c subSubCmd) Execute(world *ecs.World, out *strings.Builder) {}
 func (c subSubCmd) Help(out *strings.Builder) {
 	fmt.Fprint(out, "Help text.")
 }
@@ -79,7 +80,7 @@ func TestParser(t *testing.T) {
 
 func TestParserListEntities(t *testing.T) {
 	cmdString := "query comps=Position with=Velocity"
-	out, help, err := parseInput(cmdString, defaultCommands)
+	out, help, err := parseInput(cmdString, defaultCommands(nil))
 
 	assert.Nil(t, err)
 	assert.NotNil(t, out)

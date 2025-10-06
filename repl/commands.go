@@ -13,7 +13,7 @@ import (
 
 // Command interface.
 type Command interface {
-	Execute(repl *Repl, out *strings.Builder)
+	Execute(world *ecs.World, out *strings.Builder)
 	Help(out *strings.Builder)
 }
 
@@ -22,12 +22,14 @@ type commandEntry struct {
 	visible bool
 }
 
-type help struct{}
+type help struct {
+	repl *Repl
+}
 
-func (c help) Execute(repl *Repl, out *strings.Builder) {
-	cmds := make([]string, 0, len(repl.commands))
-	help := make(map[string]string, len(repl.commands))
-	for cmd, obj := range repl.commands {
+func (c help) Execute(world *ecs.World, out *strings.Builder) {
+	cmds := make([]string, 0, len(c.repl.commands))
+	help := make(map[string]string, len(c.repl.commands))
+	for cmd, obj := range c.repl.commands {
 		if !obj.visible {
 			continue
 		}
@@ -54,14 +56,16 @@ func (c help) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Show this help.")
 }
 
-type pause struct{}
+type pause struct {
+	repl *Repl
+}
 
-func (c pause) Execute(repl *Repl, out *strings.Builder) {
-	if repl.callbacks.Pause == nil {
+func (c pause) Execute(world *ecs.World, out *strings.Builder) {
+	if c.repl.callbacks.Pause == nil {
 		fmt.Fprint(out, "No pause callback provided\n")
 		return
 	}
-	repl.callbacks.Pause(out)
+	c.repl.callbacks.Pause(out)
 	fmt.Fprint(out, "Simulation paused\n")
 }
 
@@ -69,14 +73,16 @@ func (c pause) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Pause the connected simulation.")
 }
 
-type resume struct{}
+type resume struct {
+	repl *Repl
+}
 
-func (c resume) Execute(repl *Repl, out *strings.Builder) {
-	if repl.callbacks.Resume == nil {
+func (c resume) Execute(world *ecs.World, out *strings.Builder) {
+	if c.repl.callbacks.Resume == nil {
 		fmt.Fprint(out, "No resume callback provided\n")
 		return
 	}
-	repl.callbacks.Resume(out)
+	c.repl.callbacks.Resume(out)
 	fmt.Fprint(out, "Simulation resumed\n")
 }
 
@@ -84,14 +90,16 @@ func (c resume) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Resume the connected simulation.")
 }
 
-type stop struct{}
+type stop struct {
+	repl *Repl
+}
 
-func (c stop) Execute(repl *Repl, out *strings.Builder) {
-	if repl.callbacks.Stop == nil {
+func (c stop) Execute(world *ecs.World, out *strings.Builder) {
+	if c.repl.callbacks.Stop == nil {
 		fmt.Fprint(out, "No stop callback provided\n")
 		return
 	}
-	repl.callbacks.Stop(out)
+	c.repl.callbacks.Stop(out)
 	fmt.Fprint(out, "Simulation terminated\n")
 }
 
@@ -101,14 +109,7 @@ func (c stop) Help(out *strings.Builder) {
 
 type exit struct{}
 
-func (c exit) Execute(repl *Repl, out *strings.Builder) {
-	if repl.callbacks.Stop == nil {
-		fmt.Fprint(out, "No stop callback provided\n")
-		return
-	}
-	repl.callbacks.Stop(out)
-	fmt.Fprint(out, "Simulation terminated\n")
-}
+func (c exit) Execute(world *ecs.World, out *strings.Builder) {}
 
 func (c exit) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Exit the REPL without stopping the simulation.")
@@ -116,8 +117,8 @@ func (c exit) Help(out *strings.Builder) {
 
 type stats struct{}
 
-func (c stats) Execute(repl *Repl, out *strings.Builder) {
-	stats := repl.World().Stats()
+func (c stats) Execute(world *ecs.World, out *strings.Builder) {
+	stats := world.Stats()
 	fmt.Fprint(out, stats)
 }
 
@@ -135,21 +136,21 @@ type query struct {
 	Full      bool     `help:"Show all components, not only those queried."`
 }
 
-func (c query) Execute(repl *Repl, out *strings.Builder) {
-	comps, err := getComponentIDs(repl.World(), c.Comps)
+func (c query) Execute(world *ecs.World, out *strings.Builder) {
+	comps, err := getComponentIDs(world, c.Comps)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
 	}
 
-	allIDs := ecs.ComponentIDs(repl.World())
+	allIDs := ecs.ComponentIDs(world)
 	compTypes := make([]reflect.Type, 0, len(allIDs))
 	for _, id := range allIDs {
-		info, _ := ecs.ComponentInfo(repl.World(), id)
+		info, _ := ecs.ComponentInfo(world, id)
 		compTypes = append(compTypes, info.Type)
 	}
 
-	with, err := getComponentIDs(repl.World(), c.With)
+	with, err := getComponentIDs(world, c.With)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
@@ -158,13 +159,13 @@ func (c query) Execute(repl *Repl, out *strings.Builder) {
 	allComps = append(allComps, comps...)
 	allComps = append(allComps, with...)
 
-	without, err := getComponentIDs(repl.World(), c.Without)
+	without, err := getComponentIDs(world, c.Without)
 	if err != nil {
 		fmt.Fprintln(out, err.Error())
 		return
 	}
 
-	filter := ecs.NewUnsafeFilter(repl.World(), allComps...).Without(without...)
+	filter := ecs.NewUnsafeFilter(world, allComps...).Without(without...)
 	if c.Exclusive {
 		filter = filter.Exclusive()
 	}
@@ -221,10 +222,10 @@ func (c query) Help(out *strings.Builder) {
 type shrink struct {
 }
 
-func (c shrink) Execute(repl *Repl, out *strings.Builder) {
-	oldMem := repl.World().Stats().Memory
-	repl.World().Shrink()
-	newMem := repl.World().Stats().Memory
+func (c shrink) Execute(world *ecs.World, out *strings.Builder) {
+	oldMem := world.Stats().Memory
+	world.Shrink()
+	newMem := world.Stats().Memory
 
 	if newMem != oldMem {
 		fmt.Fprintf(out, "Shrink world memory: %s -> %s\n", formatMemory(oldMem), formatMemory(newMem))
@@ -243,7 +244,7 @@ type list struct {
 	Archetypes listArchetypes
 }
 
-func (c list) Execute(_ *Repl, out *strings.Builder) {
+func (c list) Execute(_ *ecs.World, out *strings.Builder) {
 	fmt.Fprintln(out, "Lists various things. Run `help list` for details.")
 }
 
@@ -253,12 +254,12 @@ func (c list) Help(out *strings.Builder) {
 
 type listResources struct{}
 
-func (c listResources) Execute(repl *Repl, out *strings.Builder) {
-	allRes := ecs.ResourceIDs(repl.World())
+func (c listResources) Execute(world *ecs.World, out *strings.Builder) {
+	allRes := ecs.ResourceIDs(world)
 	padIDs := numDigits(len(allRes))
 	cnt := 0
 	for _, id := range allRes {
-		res := repl.World().Resources().Get(id)
+		res := world.Resources().Get(id)
 		fmt.Fprintf(out, "%*d: %#v\n", padIDs, id.Index(), res)
 		cnt++
 	}
@@ -273,12 +274,12 @@ func (c listResources) Help(out *strings.Builder) {
 
 type listComponents struct{}
 
-func (c listComponents) Execute(repl *Repl, out *strings.Builder) {
-	allComp := ecs.ComponentIDs(repl.World())
+func (c listComponents) Execute(world *ecs.World, out *strings.Builder) {
+	allComp := ecs.ComponentIDs(world)
 	padIDs := numDigits(len(allComp))
 	cnt := 0
 	for _, id := range allComp {
-		if info, ok := ecs.ComponentInfo(repl.World(), id); ok {
+		if info, ok := ecs.ComponentInfo(world, id); ok {
 			fmt.Fprintf(out, "%*d: %s\n", padIDs, id.Index(), info.Type.String())
 			cnt++
 		}
@@ -294,8 +295,8 @@ func (c listComponents) Help(out *strings.Builder) {
 
 type listArchetypes struct{}
 
-func (c listArchetypes) Execute(repl *Repl, out *strings.Builder) {
-	stats := repl.World().Stats()
+func (c listArchetypes) Execute(world *ecs.World, out *strings.Builder) {
+	stats := world.Stats()
 
 	maxEntities := 0
 	maxTable := 0
@@ -323,7 +324,7 @@ func (c listArchetypes) Help(out *strings.Builder) {
 
 type runTui struct{}
 
-func (c runTui) Execute(_ *Repl, out *strings.Builder) {
+func (c runTui) Execute(_ *ecs.World, out *strings.Builder) {
 	fmt.Fprintln(out, "MONITOR")
 }
 
@@ -331,14 +332,16 @@ func (c runTui) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Starts the monitoring TUI app.")
 }
 
-type getStats struct{}
+type getStats struct {
+	repl *Repl
+}
 
-func (c getStats) Execute(repl *Repl, out *strings.Builder) {
-	stats := repl.World().Stats()
+func (c getStats) Execute(world *ecs.World, out *strings.Builder) {
+	stats := world.Stats()
 
 	ticks := 0
-	if repl.callbacks.Ticks != nil {
-		ticks = repl.callbacks.Ticks()
+	if c.repl.callbacks.Ticks != nil {
+		ticks = c.repl.callbacks.Ticks()
 	}
 
 	s := monitor.Stats{

@@ -16,7 +16,7 @@ type customCommand struct {
 	N    int    `default:"1" help:"Number of repetitions."`
 }
 
-func (c customCommand) Execute(repl *repl.Repl, out *strings.Builder) {
+func (c customCommand) Execute(world *ecs.World, out *strings.Builder) {
 	for range c.N {
 		fmt.Fprintln(out, c.Text)
 	}

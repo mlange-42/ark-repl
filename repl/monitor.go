@@ -13,7 +13,7 @@ type localConnection struct {
 
 func (s *localConnection) Get() (monitor.Stats, error) {
 	out := strings.Builder{}
-	s.repl.execCommand(getStats{}, &out)
+	s.repl.execCommand(getStats{s.repl}, &out)
 
 	st := monitor.Stats{}
 	if err := json.Unmarshal([]byte(out.String()), &st); err != nil {

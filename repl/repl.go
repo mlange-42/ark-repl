@@ -38,34 +38,39 @@ type Repl struct {
 	system    System
 }
 
-var defaultCommands = map[string]commandEntry{
-	"help":    {help{}, true},
-	"pause":   {pause{}, true},
-	"resume":  {resume{}, true},
-	"stop":    {stop{}, true},
-	"exit":    {exit{}, true},
-	"stats":   {stats{}, true},
-	"list":    {list{}, true},
-	"query":   {query{}, true},
-	"shrink":  {shrink{}, true},
-	"monitor": {runTui{}, true},
+func defaultCommands(r *Repl) map[string]commandEntry {
+	return map[string]commandEntry{
+		"help":   {help{r}, true},
+		"pause":  {pause{r}, true},
+		"resume": {resume{r}, true},
+		"stop":   {stop{r}, true},
+		"exit":   {exit{}, true},
 
-	"stats-json": {getStats{}, false},
+		"stats":   {stats{}, true},
+		"list":    {list{}, true},
+		"query":   {query{}, true},
+		"shrink":  {shrink{}, true},
+		"monitor": {runTui{}, true},
+
+		"stats-json": {getStats{r}, false},
+	}
 }
 
 // NewRepl creates a new [Repl].
 func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
-	commands := map[string]commandEntry{}
-	for k, v := range defaultCommands {
-		commands[k] = v
-	}
 	repl := Repl{
 		channel:   make(chan func()),
 		init:      make(chan struct{}),
 		world:     world,
 		callbacks: callbacks,
-		commands:  commands,
 	}
+
+	commands := map[string]commandEntry{}
+	for k, v := range defaultCommands(&repl) {
+		commands[k] = v
+	}
+
+	repl.commands = commands
 	repl.system = System{repl: &repl}
 	return &repl
 }
@@ -285,7 +290,7 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) bool {
 func (r *Repl) execCommand(cmd Command, out *strings.Builder) {
 	done := make(chan struct{})
 	r.channel <- func() {
-		cmd.Execute(r, out)
+		cmd.Execute(r.World(), out)
 		close(done)
 	}
 	<-done
