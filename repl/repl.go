@@ -30,7 +30,7 @@ type Callbacks struct {
 
 // Repl is the main entry point.
 type Repl struct {
-	channel   chan func(*ecs.World)
+	channel   chan func()
 	init      chan struct{}
 	world     *ecs.World
 	callbacks Callbacks
@@ -60,7 +60,7 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 		commands[k] = v
 	}
 	repl := Repl{
-		channel:   make(chan func(*ecs.World)),
+		channel:   make(chan func()),
 		init:      make(chan struct{}),
 		world:     world,
 		callbacks: callbacks,
@@ -171,7 +171,7 @@ func (r *Repl) Poll() {
 		for {
 			select {
 			case cmd := <-r.channel:
-				cmd(r.world)
+				cmd()
 			case <-r.init:
 				// init closed, switch to single-command mode
 				return
@@ -183,7 +183,7 @@ func (r *Repl) Poll() {
 	for {
 		select {
 		case cmd := <-r.channel:
-			cmd(r.world)
+			cmd()
 		default:
 			return
 		}
@@ -262,7 +262,7 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) bool {
 
 func (r *Repl) execCommand(cmd Command, out *strings.Builder) {
 	done := make(chan struct{})
-	r.channel <- func(world *ecs.World) {
+	r.channel <- func() {
 		cmd.Execute(r, out)
 		close(done)
 	}
