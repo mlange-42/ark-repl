@@ -37,7 +37,7 @@ func main() {
 	repl := repl.NewRepl(&world, callbacks)
 
 	// For control from this terminal:
-	repl.Start()
+	repl.Start("monitor")
 
 	// For control from another terminal:
 	//repl.StartServer(":9000")

@@ -86,10 +86,22 @@ func (r *Repl) AddCommand(name string, cmd Command) error {
 }
 
 // Start the REPL.
-func (r *Repl) Start() {
+//
+// Commands to execute at the first [Repl.Poll] (e.g. "pause", "monitor", ...) can be given as arguments.
+func (r *Repl) Start(commands ...string) {
+	fmt.Println("Ark REPL started. Type 'help' for commands.")
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
-		fmt.Println("Ark REPL started. Type 'help' for commands.")
+
+		for _, cmd := range commands {
+			fmt.Printf("> %s\n", cmd)
+			var out strings.Builder
+			if !r.handleCommand(cmd, &out) {
+				fmt.Print(out.String())
+				break
+			}
+			fmt.Print(out.String())
+		}
 
 		for {
 			fmt.Print("> ")
