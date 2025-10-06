@@ -3,6 +3,7 @@ module github.com/mlange-42/ark-repl
 go 1.24.0
 
 require (
+	github.com/alecthomas/kong v1.12.1
 	github.com/goccy/go-json v0.10.5
 	github.com/mlange-42/ark v0.5.3-0.20251003195233-33eb19f596a5
 	github.com/mum4k/termdash v0.20.0
