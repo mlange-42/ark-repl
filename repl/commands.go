@@ -12,6 +12,8 @@ import (
 )
 
 // Command interface.
+//
+// Implement this for custom commands.
 type Command interface {
 	Execute(world *ecs.World, out *strings.Builder)
 	Help(out *strings.Builder)
