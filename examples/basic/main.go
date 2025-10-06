@@ -37,10 +37,10 @@ func main() {
 	repl := repl.NewRepl(&world, callbacks)
 
 	// For control from this terminal:
-	//repl.Start()
+	repl.Start()
 
 	// For control from another terminal:
-	repl.StartServer(":9000")
+	//repl.StartServer(":9000")
 
 	// Update loop.
 	for {
