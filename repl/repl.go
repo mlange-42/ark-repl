@@ -253,11 +253,7 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) bool {
 		return true
 	}
 	cmdType := reflect.TypeOf(cmd)
-	switch cmdType {
-	case runTuiCmd:
-		//_ = monitor.New(&localConnection{repl: r})
-		//r.execCommand(cmd, out)
-	case exitCmd:
+	if cmdType == exitCmd {
 		return false
 	}
 	r.execCommand(cmd, out)
