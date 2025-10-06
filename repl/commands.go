@@ -244,7 +244,7 @@ type list struct {
 }
 
 func (c list) Execute(repl *Repl, out *strings.Builder) {
-	c.Help(repl, out)
+	fmt.Fprintln(out, "Lists various things. Run `help list` for details.")
 }
 
 func (c list) Help(repl *Repl, out *strings.Builder) {
