@@ -46,9 +46,9 @@ jobs:
       - name: Build examples
         run: |
           cd examples
-          go build ./basic
-          go build ./ark-tools
-          go build ./custom-cmd
+          go build -o test ./basic
+          go build -o test ./ark-tools
+          go build -o test ./custom-cmd
 
   lint:
     name: Run linters
