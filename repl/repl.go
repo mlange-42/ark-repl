@@ -75,11 +75,6 @@ func NewRepl(world *ecs.World, callbacks Callbacks) *Repl {
 	return &repl
 }
 
-// World returns the World associated to this REPL.
-func (r *Repl) World() *ecs.World {
-	return r.world
-}
-
 // AddCommand adds a command to the REPL.
 //
 // Returns an error if a command with the same name is already registered.
@@ -290,7 +285,7 @@ func (r *Repl) handleCommand(cmdString string, out *strings.Builder) bool {
 func (r *Repl) execCommand(cmd Command, out *strings.Builder) {
 	done := make(chan struct{})
 	r.channel <- func() {
-		cmd.Execute(r.World(), out)
+		cmd.Execute(r.world, out)
 		close(done)
 	}
 	<-done
