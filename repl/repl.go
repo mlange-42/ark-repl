@@ -95,28 +95,10 @@ func (r *Repl) Start(commands ...string) {
 		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Println("Ark REPL started. Type 'help' for commands.")
 
-		// Initial commands
-		runMonitor := false
-		for _, cmd := range commands {
-			fmt.Printf("> %s\n", cmd)
-			if cmd == "monitor" {
-				runMonitor = true
-				continue
-			}
-			var out strings.Builder
-			if !r.handleCommand(cmd, &out) {
-				fmt.Print(out.String())
-				break
-			}
-			fmt.Print(out.String())
-		}
-		close(r.init)
-
-		if runMonitor {
+		if r.runInitialCommands(commands) {
 			monitor.New(&localConnection{repl: r})
 		}
 
-		// Normal commands
 		for {
 			fmt.Print("> ")
 			if !scanner.Scan() {
@@ -140,6 +122,25 @@ func (r *Repl) Start(commands ...string) {
 			fmt.Print(out.String())
 		}
 	}()
+}
+
+func (r *Repl) runInitialCommands(commands []string) bool {
+	runMonitor := false
+	for _, cmd := range commands {
+		fmt.Printf("> %s\n", cmd)
+		if cmd == "monitor" {
+			runMonitor = true
+			continue
+		}
+		var out strings.Builder
+		if !r.handleCommand(cmd, &out) {
+			fmt.Print(out.String())
+			break
+		}
+		fmt.Print(out.String())
+	}
+	close(r.init)
+	return runMonitor
 }
 
 // StartServer starts a server for the REPL.
