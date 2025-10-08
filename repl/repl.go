@@ -36,6 +36,7 @@ type Repl struct {
 	callbacks Callbacks
 	commands  map[string]commandEntry
 	system    System
+	started   bool
 }
 
 func defaultCommands(r *Repl) map[string]commandEntry {
@@ -89,7 +90,14 @@ func (r *Repl) AddCommand(name string, cmd Command) error {
 // Start the REPL.
 //
 // Commands to execute at the first [Repl.Poll] call can be given as arguments (e.g. "pause", "monitor", ...).
+//
+// Note that a 'monitor' command, if given, is deferred after all other commands.
 func (r *Repl) Start(commands ...string) {
+	if r.started {
+		fmt.Println("ERROR: REPL server is already running.")
+		os.Exit(1)
+	}
+	r.started = true
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Println("Ark REPL started. Type 'help' for commands.")
@@ -146,6 +154,11 @@ func (r *Repl) runInitialCommands(commands []string) bool {
 //
 // The addr argument should be either 'host:port' or just ':port'.
 func (r *Repl) StartServer(addr string) {
+	if r.started {
+		fmt.Println("ERROR: REPL server is already running.")
+		os.Exit(1)
+	}
+	r.started = true
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("failed to start REPL server: %s", err)

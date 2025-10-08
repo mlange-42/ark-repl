@@ -13,7 +13,8 @@ import (
 
 // CLI arguments.
 type CLI struct {
-	Address string `arg:"" help:"Server address to connect to ('host:port' or just ':port'). Default: localhost:9000" default:"localhost:9000"`
+	Address string   `arg:"" help:"Server address to connect to ('host:port' or just ':port'). Default: localhost:9000" default:"localhost:9000"`
+	Run     []string `help:"REPL commands to run on startup." short:"r" name:"run" placeholder:"COMMAND"`
 }
 
 func main() {
@@ -53,10 +54,18 @@ func main() {
 	for {
 		// Show local prompt
 		fmt.Print("> ")
-		if !clientReader.Scan() {
-			break
+
+		var input string
+		if len(cli.Run) > 0 {
+			input = cli.Run[0]
+			fmt.Println(input)
+			cli.Run = cli.Run[1:]
+		} else {
+			if !clientReader.Scan() {
+				break
+			}
+			input = clientReader.Text()
 		}
-		input := clientReader.Text()
 
 		if input == "monitor" {
 			_ = monitor.New(&monitor.RemoteConnection{Conn: conn})
