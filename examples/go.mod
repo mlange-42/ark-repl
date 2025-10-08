@@ -3,7 +3,7 @@ module github.com/mlange-42/ark-repl/examples
 go 1.25.0
 
 require (
-	github.com/mlange-42/ark v0.5.3-0.20251003195233-33eb19f596a5
+	github.com/mlange-42/ark v0.5.3-0.20251008110420-1182eceb0eea
 	github.com/mlange-42/ark-repl v0.0.0
 	github.com/mlange-42/ark-tools v0.1.5
 )
