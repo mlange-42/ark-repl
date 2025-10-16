@@ -8,6 +8,9 @@ import (
 )
 
 func parseInput(input string, commandRegistry map[string]commandEntry) (Command, bool, error) {
+	if script, ok := parseScript(input); ok {
+		return script, false, nil
+	}
 	tokens := strings.Fields(input)
 	if len(tokens) < 1 {
 		return nil, false, fmt.Errorf("no command provided")
