@@ -254,7 +254,9 @@ func (c list) Help(out *strings.Builder) {
 	fmt.Fprintln(out, "Lists various things.")
 }
 
-type listResources struct{}
+type listResources struct {
+	Length int `default:"100" help:"Maximum string length per resource to print."`
+}
 
 func (c listResources) Execute(world *ecs.World, out *strings.Builder) {
 	allRes := ecs.ResourceIDs(world)
@@ -262,7 +264,8 @@ func (c listResources) Execute(world *ecs.World, out *strings.Builder) {
 	cnt := 0
 	for _, id := range allRes {
 		res := world.Resources().Get(id)
-		fmt.Fprintf(out, "%*d: %#v\n", padIDs, id.Index(), res)
+		str := truncateString(fmt.Sprintf("%#v", res), c.Length)
+		fmt.Fprintf(out, "%*d: %s\n", padIDs, id.Index(), str)
 		cnt++
 	}
 	if cnt == 0 {
