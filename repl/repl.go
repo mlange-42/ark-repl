@@ -121,6 +121,34 @@ func (r *Repl) Start(commands ...string) {
 				continue
 			}
 
+			// Check for start of block input
+			if line == "$" {
+				var blockLines []string
+				blockLines = append(blockLines, "$") // include opening delimiter
+
+				for {
+					if !scanner.Scan() {
+						fmt.Println("Unexpected end of input during block.")
+						return
+					}
+					blockLine := scanner.Text()
+					trimmed := strings.TrimSpace(blockLine)
+
+					blockLines = append(blockLines, blockLine)
+
+					if trimmed == "$" {
+						break // closing delimiter found
+					}
+				}
+
+				// Send full block (including $...$) to handleCommand
+				fullBlock := strings.Join(blockLines, "\n")
+				var out strings.Builder
+				r.handleCommand(fullBlock, &out)
+				fmt.Print(out.String())
+				continue
+			}
+
 			var out strings.Builder
 			if !r.handleCommand(line, &out) {
 				fmt.Print(out.String())
