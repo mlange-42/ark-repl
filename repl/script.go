@@ -31,6 +31,7 @@ import (
 func RunScript(worldPtr uintptr, outPtr uintptr) {
 	world := (*ecs.World)(unsafe.Pointer(worldPtr))
 	out := (*strings.Builder)(unsafe.Pointer(outPtr))
+	fmt.Fprint(out, "")
 
 	$$CODE$$
 

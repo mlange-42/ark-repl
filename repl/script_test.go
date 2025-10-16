@@ -30,7 +30,8 @@ func TestScriptQuery(t *testing.T) {
 
 	cmd := runScript{
 		Script: `
-	_ = ecs.NewFilter1[examples.Position](world)
+	f := ecs.NewFilter1[examples.Position](world)
+	fmt.Println(f)
 		`,
 	}
 
