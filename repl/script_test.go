@@ -1,6 +1,7 @@
 package repl
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestScript(t *testing.T) {
+func TestScriptPrint(t *testing.T) {
 	world := ecs.NewWorld()
 	out := strings.Builder{}
 	repl := NewRepl(&world, Callbacks{})
@@ -20,4 +21,21 @@ func TestScript(t *testing.T) {
 	cmd.Execute(repl, &out)
 
 	assert.Equal(t, "TEST", out.String())
+}
+
+func TestScriptQuery(t *testing.T) {
+	world := ecs.NewWorld()
+	out := strings.Builder{}
+	repl := NewRepl(&world, Callbacks{})
+
+	cmd := runScript{
+		Script: `
+	_ = ecs.NewFilter1[examples.Position](world)
+		`,
+	}
+
+	cmd.Execute(repl, &out)
+
+	fmt.Println(out.String())
+	//assert.Equal(t, "TEST", out.String())
 }

@@ -41,7 +41,23 @@ func main() {} // Required for c-shared build
 
 	script := strings.Replace(template, "$$CODE$$", c.Script, 1)
 
-	tmpScript, err := os.CreateTemp("", "*.go")
+	currDir, _ := os.Getwd()
+	defer os.Chdir(currDir)
+
+	tmpDir, err := os.MkdirTemp("", "")
+	if err != nil {
+		fmt.Fprintf(out, "Error creating temporary script directory: %s\n", err.Error())
+		return
+	}
+	os.Chdir(tmpDir)
+	cmd := exec.Command("go", "mod", "init", "user-script")
+	if cmdOut, err := cmd.CombinedOutput(); err != nil {
+		fmt.Fprintf(out, "building script failed: %s\n", err.Error())
+		fmt.Println(string(cmdOut))
+		return
+	}
+
+	tmpScript, err := os.Create("script.go")
 	if err != nil {
 		fmt.Fprintf(out, "Error creating temporary script file: %s\n", err.Error())
 		return
@@ -52,21 +68,42 @@ func main() {} // Required for c-shared build
 	}
 	tmpScript.Close()
 
-	tmpDll, err := os.CreateTemp("", "*.so")
-	if err != nil {
-		fmt.Fprintf(out, "Error creating temporary library file: %s\n", err.Error())
+	cmd = exec.Command("go", "get", "./...")
+	if cmdOut, err := cmd.CombinedOutput(); err != nil {
+		fmt.Fprintf(out, "loading dependencies failed: %s\n", err.Error())
+		fmt.Println(string(cmdOut))
 		return
 	}
-	tmpDll.Close()
 
-	cmd := exec.Command("go", "build", "-buildmode=c-shared", "-o", tmpDll.Name(), tmpScript.Name())
+	cmd = exec.Command("go", "fmt", "./script.go")
+	if cmdOut, err := cmd.CombinedOutput(); err != nil {
+		fmt.Fprintf(out, "formatting script failed: %s\n", err.Error())
+		fmt.Println(string(cmdOut))
+		return
+	}
+
+	cmd = exec.Command("go", "install", "golang.org/x/tools/cmd/goimports@latest")
+	if cmdOut, err := cmd.CombinedOutput(); err != nil {
+		fmt.Fprintf(out, "error installing goimports: %s\n", err.Error())
+		fmt.Println(string(cmdOut))
+		return
+	}
+
+	cmd = exec.Command("goimports", "-w", "./script.go")
+	if cmdOut, err := cmd.CombinedOutput(); err != nil {
+		fmt.Fprintf(out, "error installing goimports: %s\n", err.Error())
+		fmt.Println(string(cmdOut))
+		return
+	}
+
+	cmd = exec.Command("go", "build", "-buildmode=c-shared", "-o", "script.so", "./...")
 	if cmdOut, err := cmd.CombinedOutput(); err != nil {
 		fmt.Fprintf(out, "building script failed: %s\n", err.Error())
 		fmt.Println(string(cmdOut))
 		return
 	}
 
-	dll := syscall.NewLazyDLL(tmpDll.Name())
+	dll := syscall.NewLazyDLL("script.so")
 	run := dll.NewProc("RunScript")
 	_, _, err = run.Call(
 		uintptr(unsafe.Pointer(repl.World())),
