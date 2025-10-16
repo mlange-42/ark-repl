@@ -72,9 +72,31 @@ func main() {
 			continue
 		}
 
-		// Send command to server
-		if _, err := fmt.Fprintln(conn, input); err != nil {
-			panic(err)
+		if input == "$" {
+			var blockLines []string
+			blockLines = append(blockLines, "$") // include opening delimiter
+
+			for {
+				if !clientReader.Scan() {
+					fmt.Println("Unexpected end of input during block.")
+					return
+				}
+				blockLine := clientReader.Text()
+				blockLines = append(blockLines, blockLine)
+
+				if strings.TrimSpace(blockLine) == "$" {
+					break // closing delimiter found
+				}
+			}
+
+			// Send full block (including $...$) to server
+			fullBlock := strings.Join(blockLines, "\n")
+			fmt.Fprintln(conn, fullBlock)
+		} else {
+			// Send command to server
+			if _, err := fmt.Fprintln(conn, input); err != nil {
+				panic(err)
+			}
 		}
 
 		// Read response until next prompt
