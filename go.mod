@@ -8,7 +8,6 @@ require (
 	github.com/mlange-42/ark v0.5.3-0.20251008110420-1182eceb0eea
 	github.com/mum4k/termdash v0.20.0
 	github.com/stretchr/testify v1.11.1
-	github.com/traefik/yaegi v0.16.1
 )
 
 require (

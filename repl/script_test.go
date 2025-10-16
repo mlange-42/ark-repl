@@ -1,49 +1,23 @@
 package repl
 
 import (
-	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/mlange-42/ark/ecs"
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/yaegi/interp"
-	"github.com/traefik/yaegi/stdlib"
 )
 
 func TestScript(t *testing.T) {
+	world := ecs.NewWorld()
 	out := strings.Builder{}
+	repl := NewRepl(&world, Callbacks{})
 
-	i := interp.New(interp.Options{})
-	i.Use(stdlib.Symbols)
-
-	i.Use(map[string]map[string]reflect.Value{
-		"script/script": {
-			"Out": reflect.ValueOf(&out),
-		},
-	})
-	i.ImportUsed()
-	script := `
-        //package main
-        import (
-		    "fmt"
-			. "script"
-        )
-
-		type test[T any] struct {
-		    V T
-		}
-
-        func main() {
-			t := test[string]{V: "abc"}
-            fmt.Fprintln(Out, "TEST")
-        }
-    `
-	_, err := i.Eval(script)
-	if err != nil {
-		panic(err)
+	cmd := runScript{
+		Script: `fmt.Fprint(out, "TEST")`,
 	}
-	assert.Nil(t, err)
 
-	fmt.Println(out.String())
+	cmd.Execute(repl, &out)
+
+	assert.Equal(t, "TEST", out.String())
 }

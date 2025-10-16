@@ -8,8 +8,6 @@ require (
 	github.com/mlange-42/ark-tools v0.1.5
 )
 
-require github.com/traefik/yaegi v0.16.1 // indirect
-
 replace github.com/mlange-42/ark-repl => ../
 
 require (

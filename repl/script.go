@@ -2,11 +2,11 @@ package repl
 
 import (
 	"fmt"
-	"reflect"
+	"os"
+	"os/exec"
 	"strings"
-
-	"github.com/traefik/yaegi/interp"
-	"github.com/traefik/yaegi/stdlib"
+	"syscall"
+	"unsafe"
 )
 
 type runScript struct {
@@ -14,31 +14,66 @@ type runScript struct {
 }
 
 func (c runScript) Execute(repl *Repl, out *strings.Builder) {
-	i := interp.New(interp.Options{})
-	i.Use(stdlib.Symbols)
+	template := `package main
 
-	i.Use(map[string]map[string]reflect.Value{
-		"main": {
-			"world": reflect.ValueOf(repl.world),
-			"out":   reflect.ValueOf(out),
-		},
-	})
-	template := `
-        package main
-        import (
-		    "fmt"
-        )
+import "C"
+import (
+	"fmt"
+	"strings"
+	"unsafe"
 
-        func main() {
-            $$CODE$$
-        }
-    `
+	"github.com/mlange-42/ark/ecs"
+)
+
+//export RunScript
+func RunScript(worldPtr uintptr, outPtr uintptr) {
+	world := (*ecs.World)(unsafe.Pointer(worldPtr))
+	out := (*strings.Builder)(unsafe.Pointer(outPtr))
+
+	$$CODE$$
+
+	_ = world
+	_ = out
+}
+
+func main() {} // Required for c-shared build
+`
 
 	script := strings.Replace(template, "$$CODE$$", c.Script, 1)
 
-	_, err := i.Eval(script)
+	tmpScript, err := os.CreateTemp("", "*.go")
 	if err != nil {
-		fmt.Fprintf(out, "Error evaluating script: %s\n", err.Error())
+		fmt.Fprintf(out, "Error creating temporary script file: %s\n", err.Error())
+		return
+	}
+	if _, err := tmpScript.WriteString(script); err != nil {
+		fmt.Fprintf(out, "Error writing temporary script file: %s\n", err.Error())
+		return
+	}
+	tmpScript.Close()
+
+	tmpDll, err := os.CreateTemp("", "*.so")
+	if err != nil {
+		fmt.Fprintf(out, "Error creating temporary library file: %s\n", err.Error())
+		return
+	}
+	tmpDll.Close()
+
+	cmd := exec.Command("go", "build", "-buildmode=c-shared", "-o", tmpDll.Name(), tmpScript.Name())
+	if cmdOut, err := cmd.CombinedOutput(); err != nil {
+		fmt.Fprintf(out, "building script failed: %s\n", err.Error())
+		fmt.Println(string(cmdOut))
+		return
+	}
+
+	dll := syscall.NewLazyDLL(tmpDll.Name())
+	run := dll.NewProc("RunScript")
+	_, _, err = run.Call(
+		uintptr(unsafe.Pointer(repl.World())),
+		uintptr(unsafe.Pointer(out)),
+	)
+	if err != nil && err.Error() != "The operation completed successfully." {
+		panic(err)
 	}
 }
 
