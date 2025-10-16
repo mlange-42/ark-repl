@@ -18,7 +18,7 @@ func TestScriptPrint(t *testing.T) {
 		Script: `fmt.Fprint(out, "TEST")`,
 	}
 
-	cmd.Execute(repl, &out)
+	cmd.Execute(repl.world, &out)
 
 	assert.Equal(t, "TEST", out.String())
 }
@@ -34,7 +34,7 @@ func TestScriptQuery(t *testing.T) {
 		`,
 	}
 
-	cmd.Execute(repl, &out)
+	cmd.Execute(repl.world, &out)
 
 	fmt.Println(out.String())
 	//assert.Equal(t, "TEST", out.String())

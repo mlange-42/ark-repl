@@ -7,13 +7,15 @@ import (
 	"strings"
 	"syscall"
 	"unsafe"
+
+	"github.com/mlange-42/ark/ecs"
 )
 
 type runScript struct {
 	Script string
 }
 
-func (c runScript) Execute(repl *Repl, out *strings.Builder) {
+func (c runScript) Execute(world *ecs.World, out *strings.Builder) {
 	template := `package main
 
 import "C"
@@ -106,7 +108,7 @@ func main() {} // Required for c-shared build
 	dll := syscall.NewLazyDLL("script.so")
 	run := dll.NewProc("RunScript")
 	_, _, err = run.Call(
-		uintptr(unsafe.Pointer(repl.World())),
+		uintptr(unsafe.Pointer(world)),
 		uintptr(unsafe.Pointer(out)),
 	)
 	if err != nil && err.Error() != "The operation completed successfully." {
@@ -114,7 +116,7 @@ func main() {} // Required for c-shared build
 	}
 }
 
-func (c runScript) Help(repl *Repl, out *strings.Builder) {}
+func (c runScript) Help(out *strings.Builder) {}
 
 func parseScript(script string) (Command, bool) {
 	if !(strings.HasPrefix(script, "$\n") && strings.HasSuffix(script, "\n$")) {
