@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/alecthomas/kong v1.12.1
 	github.com/goccy/go-json v0.10.5
-	github.com/mlange-42/ark v0.5.3-0.20251008110420-1182eceb0eea
+	github.com/mlange-42/ark v0.6.1
 	github.com/mum4k/termdash v0.20.0
 	github.com/stretchr/testify v1.11.1
 )
